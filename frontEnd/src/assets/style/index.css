@@ -1,0 +1,846 @@
+/* =========================
+   🌍 GLOBAL
+========================= */
+body {
+  margin: 0;
+  overflow: hidden;
+
+  font-family: "Inter", sans-serif;
+  color: #f8fafc;
+
+  background: linear-gradient(
+    135deg,
+    #0f172a,
+    #111827,
+    #1e293b
+  );
+}
+
+/* =========================
+   📦 APP CONTAINER
+========================= */
+.app-container {
+  display: flex;
+  flex-direction: column;
+
+  width: 800px;
+  height: calc(100vh - 80px);
+
+  margin: 40px auto;
+  padding: 24px;
+
+  overflow: hidden;
+
+  background: rgba(15, 23, 42, 0.78);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 28px;
+
+  backdrop-filter: blur(18px);
+
+  box-shadow: 0 25px 60px
+    rgba(0, 0, 0, 0.45);
+}
+
+.app-title {
+  margin: 0;
+
+  font-family: Georgia,
+    "Times New Roman", Times, serif;
+
+  font-size: 30px;
+  font-style: italic;
+  font-weight: 700;
+
+  color: #f8fafc;
+}
+
+/* =========================
+   📅 CALENDAR
+========================= */
+.calendar-strip {
+  display: flex;
+  justify-content: space-around;
+
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 65px;
+  height: 72px;
+
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.05);
+
+  border-radius: 16px;
+
+  backdrop-filter: blur(6px);
+
+  transition: all 0.2s ease;
+}
+
+.day:hover {
+  transform: translateY(-2px);
+
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.day.active {
+  color: white;
+  font-weight: 600;
+
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #6366f1
+  );
+
+  box-shadow: 0 10px 25px
+    rgba(99, 102, 241, 0.35);
+}
+
+.day.today {
+  border: 1px solid #8b5cf6;
+}
+
+.day-name {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.day-number {
+  margin-top: 4px;
+
+  font-size: 16px;
+}
+
+/* =========================
+   🔘 BUTTONS
+========================= */
+.dashboard-btn {
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #6366f1
+  );
+
+  border: none;
+  border-radius: 12px;
+}
+
+.dashboard-btn:hover {
+  background: linear-gradient(
+    135deg,
+    #9f67ff,
+    #7c7fff
+  );
+}
+
+.btn {
+  padding: 10px 14px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  border: none;
+  border-radius: 12px;
+
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Primary */
+.btn.primary {
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #6366f1
+  );
+}
+
+.btn.primary:hover {
+  background: linear-gradient(
+    135deg,
+    #9f67ff,
+    #7c7fff
+  );
+}
+
+/* Secondary */
+.btn.secondary {
+  color: #dbeafe;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+}
+
+.btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Success */
+.btn.success {
+  color: #4ade80;
+
+  background: rgba(34, 197, 94, 0.12);
+}
+
+/* Warning */
+.btn.warning {
+  color: #fbbf24;
+
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* Danger */
+.btn.danger {
+  color: #f87171;
+
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* =========================
+   📋 TASK LIST
+========================= */
+.task-list {
+  flex: 1;
+
+  margin-top: 24px;
+  padding-right: 6px;
+
+  overflow-y: auto;
+}
+
+.task-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+
+  border-radius: 999px;
+}
+
+.task-card {
+  margin-bottom: 14px;
+  padding: 16px;
+
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 20px;
+
+  transition: all 0.2s ease;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.task-card h3 {
+  margin: 0 0 6px;
+
+  font-size: 16px;
+
+  color: #f8fafc;
+}
+
+.task-card p {
+  margin: 6px 0 12px;
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  color: #94a3b8;
+
+  word-break: break-word;
+}
+
+.task-actions {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 8px;
+}
+
+.completed {
+  opacity: 0.55;
+
+  text-decoration: line-through;
+}
+
+.completed-label {
+  display: inline-block;
+
+  margin-bottom: 10px;
+  padding: 4px 10px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: white;
+
+  background: hsl(142, 66%, 15%);
+
+  border-radius: 999px;
+}
+
+.action-bar {
+  display: flex;
+
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* =========================
+   ❌ MISSED TASK
+========================= */
+.missed-task {
+  position: relative;
+
+  border: 1px solid
+    rgba(239, 68, 68, 0.6);
+}
+
+.missed-label {
+  position: absolute;
+
+  top: 10px;
+  right: 10px;
+
+  padding: 4px 8px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  color: white;
+
+  letter-spacing: 0.5px;
+
+  background: #ef4444;
+
+  border-radius: 6px;
+}
+
+/* =========================
+   🪟 MODAL OVERLAY
+========================= */
+.overlay,
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  padding-top: 80px;
+
+  background: rgba(2, 6, 23, 0.7);
+
+  backdrop-filter: blur(5px);
+}
+
+/* =========================
+   🪟 MODAL
+========================= */
+.modal,
+.modal-box,
+.detail-modal {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+
+  width: 550px;
+  min-height: 400px;
+
+  padding: 24px;
+
+  overflow-y: auto;
+
+  color: #f8fafc;
+
+  background: rgba(15, 23, 42, 0.97);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 24px;
+
+  backdrop-filter: blur(14px);
+
+  box-sizing: border-box;
+
+  animation: modalPop 0.25s ease;
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================
+   📄 DETAIL MODAL
+========================= */
+.detail-modal h2 {
+  margin: 0;
+
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+
+  color: #f8fafc;
+}
+
+.detail-section {
+  padding: 16px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.05);
+
+  border-radius: 18px;
+}
+
+.detail-section strong {
+  display: block;
+
+  margin-bottom: 10px;
+
+  font-size: 13px;
+
+  color: #c4b5fd;
+
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-section p {
+  margin: 0;
+
+  font-size: 14px;
+  line-height: 1.7;
+
+  color: #e2e8f0;
+
+  word-break: break-word;
+}
+
+/* =========================
+   🧾 INPUTS
+========================= */
+.modal input,
+.modal textarea {
+  width: 100%;
+
+  margin-top: 8px;
+  padding: 12px;
+
+  font-size: 14px;
+  color: white;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 12px;
+
+  box-sizing: border-box;
+}
+
+.modal textarea {
+  min-height: 220px;
+
+  resize: none;
+}
+
+.modal input::placeholder,
+.modal textarea::placeholder {
+  color: #94a3b8;
+}
+
+.modal input:focus,
+.modal textarea:focus {
+  outline: none;
+
+  border-color: #8b5cf6;
+
+  box-shadow: 0 0 0 3px
+    rgba(139, 92, 246, 0.18);
+}
+
+/* =========================
+   🔘 MODAL ACTIONS
+========================= */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/* =========================
+   📊 DASHBOARD
+========================= */
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  font-family: Georgia,
+    "Times New Roman", Times, serif;
+
+  font-size: 16px;
+  font-style: italic;
+  font-weight: bold;
+
+  color: #f8fafc;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+
+  color: #f8fafc;
+}
+
+.date {
+  margin: 0;
+
+  font-size: 14px;
+
+  color: #94a3b8;
+}
+
+.section-title {
+  margin: 10px 0 0;
+
+  font-size: 18px;
+
+  color: #f1f5f9;
+}
+
+/* =========================
+   📈 STATS GRID
+========================= */
+.stats-grid {
+  display: grid;
+
+  grid-template-columns: repeat(
+    4,
+    1fr
+  );
+
+  gap: 14px;
+}
+
+.stat-box {
+  padding: 18px;
+
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 18px;
+
+  transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-3px);
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stat-box h3 {
+  margin: 0;
+
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.stat-box p {
+  margin-top: 8px;
+
+  font-size: 13px;
+
+  color: #94a3b8;
+}
+
+.stat-box.success h3 {
+  color: #4ade80;
+}
+
+.stat-box.warning h3 {
+  color: #fbbf24;
+}
+
+.stat-box.primary h3 {
+  color: #a78bfa;
+}
+
+/* =========================
+   📊 PROGRESS BAR
+========================= */
+.progress-bar {
+  width: 100%;
+  height: 10px;
+
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border-radius: 999px;
+}
+
+.progress-fill {
+  height: 100%;
+
+  background: linear-gradient(
+    135deg,
+    #8b5cf6,
+    #6366f1
+  );
+
+  border-radius: 999px;
+
+  transition: width 0.4s ease;
+}
+
+/* =========================
+   📉 CHART
+========================= */
+.chart-box {
+  width: 100%;
+  height: 320px;
+
+  padding: 20px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 22px;
+
+  box-sizing: border-box;
+}
+
+/* Chart bars */
+.recharts-bar-rectangle path {
+  fill: #8b5cf6;
+
+  transition: all 0.25s ease;
+}
+
+.recharts-bar-rectangle:hover path {
+  fill: #a78bfa;
+}
+
+/* Axis text */
+.recharts-cartesian-axis-tick-value {
+  fill: #94a3b8;
+
+  font-size: 12px;
+}
+
+/* Grid lines */
+.recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.05);
+}
+
+/* Tooltip */
+.custom-tooltip {
+  padding: 12px 16px;
+
+  color: white;
+
+  background: rgba(15, 23, 42, 0.98);
+
+  border: 1px solid #8b5cf6;
+
+  border-radius: 12px;
+
+  box-shadow: 0 10px 30px
+    rgba(0, 0, 0, 0.35);
+}
+
+.custom-tooltip p {
+  margin: 0;
+
+  font-size: 12px;
+
+  color: #c4b5fd;
+}
+
+.custom-tooltip h4 {
+  margin: 6px 0 0;
+
+  font-size: 15px;
+}
+
+/* =========================
+   🏆 SCORE + STREAK
+========================= */
+.score-box,
+.streak-box {
+  padding: 20px;
+
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.06);
+
+  border-radius: 20px;
+}
+
+.score-box {
+  height: 100px;
+}
+
+.score-box h2,
+.streak-box h2 {
+  margin: 0;
+  padding-bottom: 5px;
+
+  font-size: 14px;
+
+  color: #94a3b8;
+}
+
+.score-box h1 {
+  margin: 0;
+
+  font-size: 48px;
+
+  background: linear-gradient(
+    135deg,
+    #c4b5fd,
+    #818cf8
+  );
+
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.score-box p {
+  margin: 0;
+
+  font-family: Georgia,
+    "Times New Roman", Times, serif;
+
+  font-size: 30px;
+  font-weight: 800;
+
+  color: #dbeafe;
+}
+
+.streak-box {
+  font-size: 18px;
+  font-weight: 600;
+
+  color: #f8fafc;
+}
+
+/* =========================
+   📱 RESPONSIVE
+========================= */
+@media (max-width: 900px) {
+  .app-container {
+    width: 92%;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(
+      2,
+      1fr
+    );
+  }
+}
+
+@media (max-width: 600px) {
+  .calendar-strip {
+    gap: 8px;
+
+    overflow-x: auto;
+  }
+
+  .modal,
+  .modal-box,
+  .detail-modal {
+    width: 92%;
+    min-height: auto;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-box {
+    height: 260px;
+    padding: 14px;
+  }
+
+  .score-box h1 {
+    font-size: 38px;
+  }
+
+  .detail-modal h2 {
+    font-size: 22px;
+  }
+}

@@ -1,12 +1,17 @@
-import ToDoApp from "./ToDoApp.jsx";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+import Home from "./pages/home";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
-    <div>
-      <ToDoApp />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   );
 }
 
 export default App;
-

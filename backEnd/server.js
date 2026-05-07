@@ -1,30 +1,29 @@
+require("dotenv").config({ path: "./.env" });
 const express = require("express");
-const app = express();
 const cors = require("cors");
+const { sequelize } = require("./models");
+const router = require("./routes/index");
 
-const sequelize = require("./config/db"); 
-const taskRoutes = require("./routes/taskRoutes");
+const errorHandler = require("./middlewares/error.middleware");
 
-const PORT = 5000;
+const app = express();
 
-// Middleware
-app.use(cors())
+app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/api/tasks", taskRoutes);
+app.use("/api", router);
+app.use(errorHandler);
 
-// DB + Server start
-sequelize.authenticate()
-  .then(() => {
-    console.log("Database connected...");
-    return sequelize.sync({alter: true}); 
-  })
+const PORT = process.env.PORT || 5000;
+
+sequelize
+  .sync({ alter: true })
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server is running on port ${PORT}`);
     });
   })
-  .catch((err) => {
-    console.error("Error:", err);
+  .catch((error) => {
+    console.error("Unable to connect to the database:", error);
+    process.exit(1);
   });
