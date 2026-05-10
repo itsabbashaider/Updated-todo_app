@@ -1,0 +1,449 @@
+/* =========================
+   📊 DASHBOARD
+========================= */
+
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  min-height: 142vh;
+
+  padding: 40px;
+
+  overflow-x: hidden;
+}
+
+/* =========================
+   🧠 HEADER
+========================= */
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  flex-wrap: wrap;
+
+  gap: 18px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+
+  font-size: 38px;
+  font-weight: 800;
+
+  color: #f8fafc;
+
+  letter-spacing: -1px;
+}
+
+.date {
+  margin-top: 6px;
+
+  color: #94a3b8;
+
+  font-size: 14px;
+}
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+/* =========================
+   📅 DAY NAV
+========================= */
+
+.day-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 14px;
+
+  margin-top: 4px;
+}
+
+.day-nav .btn {
+  min-width: 120px;
+
+  height: 46px;
+
+  border-radius: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+
+  background: rgba(15, 23, 42, 0.75);
+
+  border: 1px solid
+    rgba(148, 163, 184, 0.18);
+
+  color: #e2e8f0;
+
+  backdrop-filter: blur(10px);
+
+  transition: all 0.2s ease;
+}
+
+.day-nav .btn:hover {
+  transform: translateY(-2px);
+
+  background: rgba(30, 41, 59, 0.95);
+
+  box-shadow:
+    0 10px 24px
+      rgba(0, 0, 0, 0.28);
+}
+
+/* =========================
+   📈 STATS GRID
+========================= */
+
+.stats-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 16px;
+}
+
+.stat-box {
+  background: rgba(15, 23, 42, 0.78);
+
+  border-radius: 24px;
+
+  padding: 24px 18px;
+
+  border: 1px solid
+    rgba(148, 163, 184, 0.14);
+
+  text-align: center;
+
+  backdrop-filter: blur(18px);
+
+  transition: all 0.25s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-4px);
+
+  border-color:
+    rgba(96, 165, 250, 0.28);
+
+  box-shadow:
+    0 18px 34px
+      rgba(0, 0, 0, 0.28);
+}
+
+.stat-box h3 {
+  margin: 0;
+
+  font-size: 34px;
+  font-weight: 800;
+
+  color: #f8fafc;
+}
+
+.stat-box p {
+  margin-top: 8px;
+
+  color: #94a3b8;
+
+  font-size: 13px;
+
+  letter-spacing: 0.3px;
+}
+
+.stat-box.success h3 {
+  color: #4ade80;
+}
+
+.stat-box.warning h3 {
+  color: #fbbf24;
+}
+
+.stat-box.primary h3 {
+  color: #60a5fa;
+}
+
+/* =========================
+   📊 PROGRESS BAR
+========================= */
+
+.progress-bar {
+  width: 100%;
+  height: 12px;
+
+  background: rgba(15, 23, 42, 0.65);
+
+  border-radius: 999px;
+
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+
+  background: linear-gradient(
+    135deg,
+    #3b82f6,
+    #8b5cf6
+  );
+
+  border-radius: 999px;
+
+  transition: width 0.35s ease;
+}
+
+/* =========================
+   📉 CHART SECTION
+========================= */
+
+.section-title {
+  margin: 6px 0;
+
+  font-size: 22px;
+  font-weight: 700;
+
+  color: #f8fafc;
+}
+
+.chart-box {
+  width: 100%;
+  height: 320px;
+
+  background: rgba(15, 23, 42, 0.8);
+
+  border-radius: 28px;
+
+  padding: 22px;
+
+  border: 1px solid
+    rgba(148, 163, 184, 0.14);
+
+  box-sizing: border-box;
+
+  backdrop-filter: blur(18px);
+
+  overflow: visible;
+}
+
+.recharts-responsive-container {
+  cursor: pointer;
+}
+
+.recharts-bar-rectangle {
+  fill: #3b82f6;
+
+  transition:
+    fill 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.recharts-bar-rectangle:hover {
+  fill: #60a5fa;
+
+  opacity: 0.95;
+}
+
+.chart-bar {
+  cursor: pointer;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: #94a3b8;
+
+  font-size: 12px;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.04);
+}
+
+/* =========================
+   🧾 TOOLTIP
+========================= */
+
+.custom-tooltip {
+  background: rgba(15, 23, 42, 0.96);
+
+  border: 1px solid
+    rgba(96, 165, 250, 0.22);
+
+  border-radius: 18px;
+
+  padding: 12px 16px;
+
+  color: #f8fafc;
+
+  box-shadow:
+    0 14px 34px
+      rgba(0, 0, 0, 0.35);
+
+  backdrop-filter: blur(16px);
+}
+
+.custom-tooltip p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+.custom-tooltip h4 {
+  margin: 6px 0 0;
+
+  font-size: 15px;
+}
+
+/* =========================
+   🏆 SCORE + STREAK
+========================= */
+
+.score-box,
+.streak-box {
+  background: rgba(15, 23, 42, 0.78);
+
+  height: 160px;
+
+  border-radius: 28px;
+
+  padding: 24px;
+
+  border: 1px solid
+    rgba(148, 163, 184, 0.14);
+
+  text-align: center;
+
+  backdrop-filter: blur(18px);
+
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.score-box:hover,
+.streak-box:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 18px 38px
+      rgba(0, 0, 0, 0.28);
+}
+
+.score-box h2,
+.streak-box h2 {
+  margin: 0;
+
+
+  color: #94a3b8;
+
+  font-size: 30px;
+
+  font-family: Georgia, 'Times New Roman', Times, serif;
+
+  font-weight: 800;
+}
+
+.score-box h1 {
+  margin: 0;
+
+  font-size: 58px;
+  font-weight: 900;
+
+  background: linear-gradient(
+    135deg,
+    #60a5fa,
+    #8b5cf6
+  );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+
+  color: transparent;
+}
+
+.score-box p {
+  margin-top: 6px;
+
+  font-size: 26px;
+  font-weight: 700;
+
+  color: #f8fafc;
+}
+
+.streak-box {
+  min-height: 80px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #f8fafc;
+}
+
+/* =========================
+   📱 RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .chart-box {
+    height: 300px;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-box {
+    height: 260px;
+
+    padding: 14px;
+  }
+
+  .score-box h1 {
+    font-size: 42px;
+  }
+
+  .score-box p {
+    font-size: 22px;
+  }
+
+  .day-nav {
+    width: 100%;
+  }
+
+  .day-nav .btn {
+    flex: 1;
+
+    min-width: 0;
+  }
+}

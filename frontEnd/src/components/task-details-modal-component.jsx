@@ -41,7 +41,7 @@ function TaskDetailModal({
           </p>
         </div>
 
-        {task.completedAt && (
+        {task.completed_at && (
           <div className="detail-section">
             <strong>
               Completed At:
@@ -49,7 +49,7 @@ function TaskDetailModal({
 
             <p>
               {new Date(
-                task.completedAt
+                task.completed_at
               ).toLocaleString()}
             </p>
           </div>
@@ -57,7 +57,7 @@ function TaskDetailModal({
 
         <button
           type="button"
-          className="btn primary"
+          className="btn close-btn"
           onClick={onClose}
         >
           Close

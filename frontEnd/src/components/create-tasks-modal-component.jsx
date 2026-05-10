@@ -4,7 +4,7 @@ import {
   useCallback,
 } from "react";
 
-import ConfirmModal from "./confirm.modal";
+import ConfirmModal from "./confirmation-modal-component";
 
 function CreateModal({
   isOpen,

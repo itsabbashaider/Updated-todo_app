@@ -8,23 +8,23 @@ const ConfirmModal = ({
 
   return (
     <div
-      className="overlay"
+      className="confirm-overlay"
       onClick={onClose}
     >
       <div
-        className="modal"
+        className="confirm-modal"
         onClick={(e) =>
           e.stopPropagation()
         }
       >
-        <h3>Confirm</h3>
+        <h3>Confirm!</h3>
 
         <p>{message}</p>
 
-        <div className="modal-actions">
+        <div className="confirm-actions">
           <button
             type="button"
-            className="btn danger"
+            className="Yes btn danger"
             onClick={onConfirm}
           >
             Yes
@@ -32,7 +32,7 @@ const ConfirmModal = ({
 
           <button
             type="button"
-            className="btn secondary"
+            className="No btn secondary"
             onClick={onClose}
           >
             No

@@ -16,11 +16,11 @@ import {
 } from "../services/task.api";
 
 // Components
-import CreateModal from "../components/create.modal";
-import EditModal from "../components/edit.modal";
-import CalendarStrip from "../components/calender.modal";
-import ConfirmModal from "../components/confirm.modal";
-import TaskDetailModal from "../components/task.details.modal";
+import CreateModal from "../components/create-tasks-modal-component";
+import EditModal from "../components/edit-tasks-modal-component";
+import CalendarStrip from "../components/calender-modal-component";
+import ConfirmModal from "../components/confirmation-modal-component";
+import TaskDetailModal from "../components/task-details-modal-component";
 
 function Home() {
   const [tasks, setTasks] =
@@ -70,6 +70,12 @@ function Home() {
   const [detailTask, setDetailTask] =
     useState(null);
 
+  const [confirmMessage, setConfirmMessage] =
+    useState("");
+
+  const [calendarKey, setCalendarKey] = 
+    useState(0);
+
   const navigate = useNavigate();
 
   const fetchTasks = async () => {
@@ -80,6 +86,8 @@ function Home() {
         await getTasks();
 
       setTasks(res.data.data);
+
+      setError("");
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -163,15 +171,22 @@ function Home() {
         new Date()
       );
 
+      setCalendarKey(
+        (prev) => prev + 1
+      );
+
       window.scrollTo({
         top: 0,
         behavior: "smooth",
       });
 
       setIsCreateOpen(false);
-    } catch {
+
+      setError("");
+    } catch (err) {
       setError(
-        "Create failed"
+        err.response?.data?.message ||
+          "Create failed"
       );
     } finally {
       setLoading(false);
@@ -179,33 +194,39 @@ function Home() {
   };
 
   const handleUpdate = async (
-    id,
+    task_id,
     data
   ) => {
     try {
       await updateTask(
-        id,
+        task_id,
         data
       );
 
       await fetchTasks();
-    } catch {
+
+      setError("");
+    } catch (err) {
       setError(
-        "Update failed"
+        err.response?.data?.message ||
+          "Update failed"
       );
     }
   };
 
   const handleDelete = async (
-    id
+    task_id
   ) => {
     try {
-      await deleteTask(id);
+      await deleteTask(task_id);
 
       await fetchTasks();
-    } catch {
+
+      setError("");
+    } catch (err) {
       setError(
-        "Delete failed"
+        err.response?.data?.message ||
+          "Delete failed"
       );
     }
   };
@@ -219,7 +240,7 @@ function Home() {
       completed:
         !task.completed,
 
-      completedAt:
+      completed_at:
         !task.completed
           ? new Date().toISOString()
           : null,
@@ -229,7 +250,7 @@ function Home() {
 
     setTasks((prev) =>
       prev.map((t) =>
-        t.id === task.id
+        t.task_id === task.task_id
           ? updatedTask
           : t
       )
@@ -237,15 +258,17 @@ function Home() {
 
     try {
       await updateTask(
-        task.id,
+        task.task_id,
         {
           completed:
             updatedTask.completed,
 
-          completedAt:
-            updatedTask.completedAt,
+          completed_at:
+            updatedTask.completed_at,
         }
       );
+
+      setError("");
     } catch {
       setTasks(previous);
 
@@ -311,13 +334,14 @@ function Home() {
         0
       );
 
-      const diffDays =
+      const diffDays = Math.floor(
         (selected.getTime() -
           taskDate.getTime()) /
         (1000 *
           60 *
           60 *
-          24);
+          24)
+        );
 
       // created on selected day
       const createdToday =
@@ -330,16 +354,16 @@ function Home() {
 
       const missedTask =
         isViewingRealToday &&
-        diffDays === 1 &&
+        diffDays >= 1 &&
         !task.completed;
 
       // completed today
       const completedToday =
         isViewingRealToday &&
         task.completed &&
-        task.completedAt &&
+        task.completed_at &&
         new Date(
-          task.completedAt
+          task.completed_at
         ).toDateString() ===
           selectedDate.toDateString();
 
@@ -355,7 +379,17 @@ function Home() {
       <h1 className="app-title">
         Todo App
       </h1>
-
+      <p className="current-date">
+        {selectedDate.toLocaleDateString (
+          "en-US",
+          {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            year: "numeric"
+          }
+        )}
+      </p>
       {error && (
         <div className="error-box">
           {error}
@@ -363,6 +397,7 @@ function Home() {
       )}
 
       <CalendarStrip
+        key={calendarKey}
         selectedDate={
           selectedDate
         }
@@ -411,133 +446,124 @@ function Home() {
             No tasks for this day
           </p>
         ) : (
-          filteredTasks.map(
-            (task) => {
-              const isMissed =
-                new Date(
-                  task.createdAt
-                ).toDateString() !==
-                  selectedDate.toDateString() &&
-                !task.completed;
+          filteredTasks.map((task) => {
+            return (
+              <div
+                key={task.task_id}
+                className="task-card"
+                onClick={() => {
+                  setDetailTask(task);
 
-              return (
-                <div
-                  key={task.id}
-                  className={`task-card ${
-                    isMissed
-                      ? "missed-task"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    setDetailTask(
-                      task
-                    );
-
-                    setIsDetailOpen(
-                      true
-                    );
-                  }}
+                  setIsDetailOpen(true);
+                }}
+              >
+                <span
+                  className={
+                    task.completed
+                      ? "completed-label"
+                      : "pending-label"
+                  }
                 >
-                  {isMissed && (
-                    <span className="missed-label">
-                      MISSED
-                    </span>
-                  )}
+                  {task.completed
+                    ? "COMPLETED"
+                    : "PENDING"}
+                </span>
 
-                  {task.completed && (
-                    <span className="completed-label">
-                      COMPLETED
-                    </span>
-                  )}
+                <h3
+                  className={
+                    task.completed
+                      ? "completed"
+                      : ""
+                  }
+                >
+                  {task.title}
+                </h3>
 
-                  <h3
-                    className={
+                {task.description && (
+                  <p>
+                    {task.description.length >
+                    80
+                      ? `${task.description.slice(
+                          0,
+                          80
+                        )}...`
+                      : task.description}
+                  </p>
+                )}
+
+                <div className="task-actions">
+                  <button
+                    type="button"
+                    className="btn success"
+                    onClick={(e) => {
+                      e.stopPropagation();
+
+                      // If task already completed → confirm undo
+                      if (task.completed) {
+                      setConfirmMessage(
+                        "Are you sure you want to undo this completed task?"
+                      );
+
+                      setConfirmAction(
+                        () => () =>
+                          handleToggle(task)
+                      );
+
+                      setConfirmOpen(true);
+
+                        return;
+                      }
+
+                      // Normal complete
+                      handleToggle(task);
+                    }}
+                  >
+                    {task.completed
+                      ? "↩"
+                      : "✓"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn warning"
+                    onClick={(e) => {
+                      e.stopPropagation();
+
+                      handleEdit(task);
+                    }}
+                    disabled={
                       task.completed
-                        ? "completed"
-                        : ""
                     }
                   >
-                    {task.title}
-                  </h3>
+                    ✎
+                  </button>
 
-                  {task.description && (
-                    <p>
-                      {task.description
-                        .length >
-                      80
-                        ? `${task.description.slice(
-                            0,
-                            80
-                          )}...`
-                        : task.description}
-                    </p>
-                  )}
+                  <button
+                    type="button"
+                    className="btn danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
 
-                  <div className="task-actions">
-                    <button
-                      type="button"
-                      className="btn success"
-                      onClick={(
-                        e
-                      ) => {
-                        e.stopPropagation();
+                      setConfirmMessage(
+                        "Are you sure you want to delete this task?"
+                      );
 
-                        handleToggle(
-                          task
-                        );
-                      }}
-                    >
-                      {task.completed
-                        ? "↩"
-                        : "✓"}
-                    </button>
+                      setConfirmAction(
+                        () => () =>
+                          handleDelete(
+                            task.task_id
+                          )
+                      );
 
-                    <button
-                      type="button"
-                      className="btn warning"
-                      onClick={(
-                        e
-                      ) => {
-                        e.stopPropagation();
-
-                        handleEdit(
-                          task
-                        );
-                      }}
-                      disabled={
-                        task.completed
-                      }
-                    >
-                      ✎
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn danger"
-                      onClick={(
-                        e
-                      ) => {
-                        e.stopPropagation();
-
-                        setConfirmAction(
-                          () => () =>
-                            handleDelete(
-                              task.id
-                            )
-                        );
-
-                        setConfirmOpen(
-                          true
-                        );
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
+                      setConfirmOpen(true);
+                    }}
+                  >
+                    ✕
+                  </button>
                 </div>
-              );
-            }
-          )
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -553,7 +579,7 @@ function Home() {
 
       <EditModal
         key={
-          selectedTask?.id
+          selectedTask?.task_id
         }
         isOpen={isEditOpen}
         onClose={() => {
@@ -571,7 +597,7 @@ function Home() {
 
       <ConfirmModal
         isOpen={confirmOpen}
-        message="Are you sure you want to delete this task?"
+        message={confirmMessage}
         onClose={() =>
           setConfirmOpen(false)
         }

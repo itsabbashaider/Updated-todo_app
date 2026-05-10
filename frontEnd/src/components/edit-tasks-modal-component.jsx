@@ -3,7 +3,7 @@ import {
   useCallback,
 } from "react";
 
-import ConfirmModal from "./confirm.modal";
+import ConfirmModal from "./confirmation-modal-component";
 
 const EditModal = ({
   isOpen,
@@ -28,14 +28,14 @@ const EditModal = ({
         task?.description || "",
     });
 
-  //  Detect actual changes
+  // Detect actual changes
   const hasChanges =
     formData.title.trim() !==
       (task?.title || "").trim() ||
     formData.description.trim() !==
       (task?.description || "").trim();
 
-  //  Handle input changes
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value } =
       e.target;
@@ -46,7 +46,7 @@ const EditModal = ({
     }));
   };
 
-  //  Handle modal close
+  // Handle modal close
   const handleClose = useCallback(() => {
     if (hasChanges) {
       setConfirmCloseOpen(true);
@@ -56,20 +56,19 @@ const EditModal = ({
     onClose();
   }, [hasChanges, onClose]);
 
-  //  Confirm discard changes
+  // Confirm discard changes
   const handleConfirmClose = () => {
     setConfirmCloseOpen(false);
 
     onClose();
   };
 
-  //  Ask before update
+  // Ask before update
   const handleUpdateClick = () => {
     // Empty title prevention
     if (!formData.title.trim()) {
       return;
     }
-
 
     if (!hasChanges) {
       onClose();
@@ -82,7 +81,7 @@ const EditModal = ({
   const handleConfirmUpdate =
     async () => {
       try {
-        await onUpdate(task.id, {
+        await onUpdate(task.task_id, {
           title:
             formData.title.trim(),
 

@@ -1,5 +1,9 @@
 const { Task } = require("../models");
 
+const {
+  NotFoundError,
+} = require("../utils/errors-classes.util");
+
 /* ======================
     CREATE TASK
 ====================== */
@@ -22,7 +26,9 @@ exports.getTasks = async () => {
 exports.getTaskById = async (id) => {
   const task = await Task.findByPk(id);
 
-  if (!task) throw new Error("Task not found");
+  if (!task) {
+    throw new NotFoundError("Task not found");
+  }
 
   return task;
 };
@@ -33,7 +39,17 @@ exports.getTaskById = async (id) => {
 exports.updateTask = async (id, data) => {
   const task = await Task.findByPk(id);
 
-  if (!task) throw new Error("Task not found");
+  if (!task) {
+    throw new NotFoundError("Task not found");
+  }
+
+  if (data.completed === true) {
+    data.completed_at = new Date();
+  }
+
+  if (data.completed === false) {
+    data.completed_at = null;
+  }
 
   return await task.update(data);
 };
@@ -44,9 +60,13 @@ exports.updateTask = async (id, data) => {
 exports.deleteTask = async (id) => {
   const task = await Task.findByPk(id);
 
-  if (!task) throw new Error("Task not found");
+  if (!task) {
+    throw new NotFoundError("Task not found");
+  }
 
   await task.destroy();
 
-  return { message: "Task deleted" };
+  return {
+    message: "Task deleted",
+  };
 };

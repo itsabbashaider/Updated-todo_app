@@ -20,7 +20,7 @@ router.post(
 );
 
 router
-  .route('/:id')
+  .route('/:task_id')
   .get(
     validateRequest(todoIdParamSchema, 'params'),
     asyncHandler(taskController.getOne)
