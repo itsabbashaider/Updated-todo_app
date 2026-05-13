@@ -1,72 +1,47 @@
-const { Task } = require("../models");
+// ─── Dependencies ─────────────────────────────────────────────────────────────
+const { Task }        = require('../models');
+const { NotFoundError } = require('../utils/errors-classes.util');
 
-const {
-  NotFoundError,
-} = require("../utils/errors-classes.util");
-
-/* ======================
-    CREATE TASK
-====================== */
+// ─── Create Task ──────────────────────────────────────────────────────────────
 exports.createTask = async (data) => {
   return await Task.create(data);
 };
 
-/* ======================
-    GET ALL TASKS
-====================== */
+// ─── Get All Tasks ────────────────────────────────────────────────────────────
 exports.getTasks = async () => {
   return await Task.findAll({
-    order: [["createdAt", "DESC"]],
+    order: [['createdAt', 'DESC']],
   });
 };
 
-/* ======================
-    GET TASK BY ID
-====================== */
+// ─── Get Task By ID ───────────────────────────────────────────────────────────
 exports.getTaskById = async (id) => {
   const task = await Task.findByPk(id);
 
-  if (!task) {
-    throw new NotFoundError("Task not found");
-  }
+  if (!task) throw new NotFoundError('Task not found');
 
   return task;
 };
 
-/* ======================
-    UPDATE TASK
-====================== */
+// ─── Update Task ──────────────────────────────────────────────────────────────
 exports.updateTask = async (id, data) => {
   const task = await Task.findByPk(id);
 
-  if (!task) {
-    throw new NotFoundError("Task not found");
-  }
+  if (!task) throw new NotFoundError('Task not found');
 
-  if (data.completed === true) {
-    data.completed_at = new Date();
-  }
-
-  if (data.completed === false) {
-    data.completed_at = null;
-  }
+  if (data.completed === true)  data.completed_at = new Date();
+  if (data.completed === false) data.completed_at = null;
 
   return await task.update(data);
 };
 
-/* ======================
-    DELETE TASK
-====================== */
+// ─── Delete Task ──────────────────────────────────────────────────────────────
 exports.deleteTask = async (id) => {
   const task = await Task.findByPk(id);
 
-  if (!task) {
-    throw new NotFoundError("Task not found");
-  }
+  if (!task) throw new NotFoundError('Task not found');
 
   await task.destroy();
 
-  return {
-    message: "Task deleted",
-  };
+  return { message: 'Task deleted' };
 };

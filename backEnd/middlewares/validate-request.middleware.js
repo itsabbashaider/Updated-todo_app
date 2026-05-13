@@ -1,41 +1,37 @@
-const { ValidationError } = require("../utils/errors-classes.util");
+// ─── Dependencies ─────────────────────────────────────────────────────────────
+const { ValidationError } = require('../utils/errors-classes.util');
 
-const validateRequest =
-  (schema, source = "body") =>
-  (req, res, next) => {
-    let dataToValidate;
+// ─── Validate Request ─────────────────────────────────────────────────────────
+const validateRequest = (schema, source = 'body') => (req, res, next) => {
 
-    switch (source) {
-      case "query":
-        dataToValidate = req.query;
-        break;
-      case "params":
-        dataToValidate = req.params;
-        break;
-      case "body":
-      default:
-        dataToValidate = req.body;
-        break;
-    }
+  // ─── Resolve Source ─────────────────────────────────────────────────────────
+  let dataToValidate;
 
-    const { error, value } = schema.validate(dataToValidate, {
-      abortEarly: false,
-    });
+  switch (source) {
+    case 'query'  : dataToValidate = req.query;  break;
+    case 'params' : dataToValidate = req.params; break;
+    case 'body'   :
+    default       : dataToValidate = req.body;   break;
+  }
 
-    if (error) {
-      const details = error.details.map((err) => ({
-        field: err.path.join("."),
-        message: err.message,
-      }));
+  // ─── Validate ───────────────────────────────────────────────────────────────
+  const { error, value } = schema.validate(dataToValidate, { abortEarly: false });
 
-      return next(new ValidationError("Validation failed", details));
-    }
+  if (error) {
+    const details = error.details.map((err) => ({
+      field   : err.path.join('.'),
+      message : err.message,
+    }));
 
-    if (source === "query") req.query = value;
-    else if (source === "params") req.params = value;
-    else req.body = value;
+    return next(new ValidationError('Validation failed', details));
+  }
 
-    next();
-  };
+  // ─── Assign Validated Value ──────────────────────────────────────────────────
+  if      (source === 'query')  req.query  = value;
+  else if (source === 'params') req.params = value;
+  else                          req.body   = value;
+
+  next();
+};
 
 module.exports = validateRequest;

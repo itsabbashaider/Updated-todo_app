@@ -1,38 +1,26 @@
-const {
-  AppError,
-  InternalServerError,
-} = require("../utils/errors-classes.util");
+// ─── Dependencies ─────────────────────────────────────────────────────────────
+const { AppError, InternalServerError } = require('../utils/errors-classes.util');
+const HTTP_STATUSES                     = require('../constants/httpStatuses');
 
-const HTTP_STATUSES = require("../constants/httpStatuses");
-
+// ─── Error Handler ────────────────────────────────────────────────────────────
 const errorHandler = (err, req, res, next) => {
   let error = err;
 
   if (!(err instanceof AppError)) {
-    error = new InternalServerError(
-      err.message || "Something went wrong"
-    );
+    error = new InternalServerError(err.message || 'Something went wrong');
   }
 
-  const statusCode =
-    error.statusCode ||
-    HTTP_STATUSES.INTERNAL_SERVER_ERROR;
+  const statusCode = error.statusCode || HTTP_STATUSES.INTERNAL_SERVER_ERROR;
+  const status     = error.status     || 'error';
 
-  const status = error.status || "error";
-
-  // Log error
-  console.error("ERROR 💥:", err);
+  // ─── Log Error ──────────────────────────────────────────────────────────────
+  console.error('ERROR 💥:', err);
 
   res.status(statusCode).json({
-    success: false,
+    success : false,
     status,
-    message: error.message,
-
-    // show stack only in development
-    stack:
-      process.env.NODE_ENV === "development"
-        ? err.stack
-        : undefined,
+    message : error.message,
+    stack   : process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 };
 

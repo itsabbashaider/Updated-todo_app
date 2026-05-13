@@ -1,181 +1,64 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-import {
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
-
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
-
+// ─── Dashboard Page ───────────────────────────────────────────────────────────
 function Dashboard() {
   
-  const { state } = useLocation();
+  const { state }      = useLocation();
+  const navigate       = useNavigate();
+  const [hoverIndex, setHoverIndex] = useState(null);
 
-  const navigate = useNavigate();
+  const tasks        = state?.tasks || [];
+  const selectedDate = new Date(state?.selectedDate || new Date());
+  const selected     = selectedDate.toDateString();
 
-  const [hoverIndex, setHoverIndex] =
-    useState(null);
+  // ─── Daily Stats ──────────────────────────────────────────────────────────
+  const todayTasks = tasks.filter((task) => {
+    const createdToday   = task.createdAt && new Date(task.createdAt).toDateString() === selected;
+    const completedToday = task.completed && task.completed_at && new Date(task.completed_at).toDateString() === selected;
+    const overdueTask    = task.createdAt && new Date(task.createdAt) < selectedDate && !task.completed && selectedDate.toDateString() === new Date().toDateString();
 
-  const tasks = state?.tasks || [];
+    return createdToday || completedToday || overdueTask;
+  });
 
-  console.log(
-    JSON.stringify(
-        tasks,
-        null,
-        2
-      )
-    );
+  const total          = todayTasks.length;
+  const completed      = todayTasks.filter((t) => t.completed).length;
+  const pending        = total - completed;
+  const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100);
 
-  const selectedDate = new Date (
-    state?.selectedDate ||
-    new Date()
-  );
+  // ─── Weekly Data ──────────────────────────────────────────────────────────
+  const weeklyData = [...Array(7)].map((_, i) => {
+    const d = new Date(selectedDate);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (6 - i));
 
-  const selected =
-    selectedDate.toDateString();
+    const count = tasks.filter((t) => {
+      if (!t.completed || !t.completed_at) return false;
 
-  /* =========================
-     🔹 DAILY STATS
-  ========================= */
-  const todayTasks = tasks.filter(
-    (task) => {
-      const createdToday = 
-      task.createdAt && 
-      new Date(
-        task.createdAt
-      ).toDateString() ===
-      selected;
+      const completedDate = new Date(t.completed_at);
+      completedDate.setHours(0, 0, 0, 0);
 
-      const completedToday = 
-      task.completed && 
-      task.completed_at &&
-      new Date(
-        task.completed_at
-      ).toDateString() ===
-      selected;
-      
-      const overdueTask =
-      task.createdAt && 
-      new Date(
-        task.createdAt 
-      ) < selectedDate && 
-      !task.completed && 
-      selectedDate.toDateString() ===
-      new Date().toDateString();
+      return completedDate.toDateString() === d.toDateString();
+    }).length;
 
-      return (
-        createdToday ||
-        completedToday ||
-        overdueTask
-      );
-    }
-  );
+    return {
+      day       : d.toLocaleDateString('en-US', { weekday: 'short' }),
+      completed : count,
+    };
+  });
 
-  const total = todayTasks.length;
-
-  const completed =
-    todayTasks.filter(
-      (t) => t.completed
-    ).length;
-
-  const pending =
-    total - completed;
-
-  const completionRate =
-    total === 0
-      ? 0
-      : Math.round(
-          (completed / total) * 100
-        );
-
-  /* =========================
-     🔹 WEEKLY DATA
-  ========================= */
-  const weeklyData = [...Array(7)].map(
-    (_, i) => {
-      const d = new Date(
-        selectedDate
-      );
-
-      d.setHours(0, 0, 0, 0);
-
-      d.setDate(
-        d.getDate() - (6 - i)
-      );
-
-      const count = tasks.filter(
-        (t) => {
-          if (
-            !t.completed ||
-            !t.completed_at
-          ) {
-            return false;
-          }
-
-          const completedDate =
-            new Date(
-              t.completed_at
-            );
-
-          completedDate.setHours(
-            0,
-            0,
-            0,
-            0
-          );
-
-          return (
-            completedDate.toDateString() ===
-            d.toDateString()
-          );
-        }
-      ).length;
-
-      return {
-        day: d.toLocaleDateString(
-          "en-US",
-          {
-            weekday: "short",
-          }
-        ),
-
-        completed: count,
-      };
-    }
-  );
-
-  /* =========================
-     🔹 STREAK
-  ========================= */
+  // ─── Streak ───────────────────────────────────────────────────────────────
   let streak = 0;
 
   for (let i = 0; i < 30; i++) {
     const d = new Date();
+    d.setDate(d.getDate() - i);
 
-    d.setDate(
-      d.getDate() - i
+    const dateStr = d.toDateString();
+    const hasCompleted = tasks.some(
+      (t) => t.completed && t.completed_at && new Date(t.completed_at).toDateString() === dateStr
     );
-
-    const dateStr =
-      d.toDateString();
-
-    const hasCompleted =
-      tasks.some(
-        (t) =>
-          t.completed &&
-          t.completed_at &&
-          new Date(
-            t.completed_at
-          ).toDateString() ===
-            dateStr
-      );
 
     if (hasCompleted) {
       streak++;
@@ -184,41 +67,28 @@ function Dashboard() {
     }
   }
 
-  /* =========================
-     🔹 SCORE
-  ========================= */
-  const score =
-    completionRate;
+  // ─── Score ────────────────────────────────────────────────────────────────
+  const score = completionRate;
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="app-container dashboard-page">
-      {/* =========================
-          HEADER
-      ========================= */}
+      
+      {/* Header */}
       <div className="dashboard-header">
         <div>
           <h1>Dashboard</h1>
-
-          <p className="date">
-            {selectedDate.toDateString()}
-          </p>
+          <p className="date">{selectedDate.toDateString()}</p>
         </div>
 
         <div className="dashboard-actions">
-          <button
-            className="btn secondary"
-            onClick={() =>
-              navigate("/")
-            }
-          >
+          <button className="btn secondary" onClick={() => navigate('/')}>
             Back
           </button>
         </div>
       </div>
 
-      {/* =========================
-          STATS
-      ========================= */}
+      {/* Stats Grid */}
       <div className="stats-grid">
         <div className="stat-box">
           <h3>{total}</h3>
@@ -236,135 +106,63 @@ function Dashboard() {
         </div>
 
         <div className="stat-box primary">
-          <h3>
-            {completionRate}%
-          </h3>
-
+          <h3>{completionRate}%</h3>
           <p>Progress</p>
         </div>
       </div>
 
-      {/* =========================
-          PROGRESS BAR
-      ========================= */}
+      {/* Progress Bar */}
       <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{
-            width: `${completionRate}%`,
-          }}
-        />
+        <div className="progress-fill" style={{ width: `${completionRate}%` }} />
       </div>
 
-      {/* =========================
-          WEEKLY ACTIVITY
-      ========================= */}
-      <h2 className="section-title">
-        Weekly Activity
-      </h2>
+      {/* Weekly Activity Chart */}
+      <h2 className="section-title">Weekly Activity</h2>
 
       <div className="chart-box">
-        <ResponsiveContainer
-          width="100%"
-          height={280}
-        >
+        <ResponsiveContainer width="100%" height={280}>
           <BarChart data={weeklyData}>
-            <XAxis
-              dataKey="day"
-              stroke="#9ca3af"
-            />
+            
+            <XAxis dataKey="day" stroke="#9ca3af" />
 
             <Tooltip
-              content={({
-                active,
-                payload,
-              }) => {
-                if (
-                  active &&
-                  payload &&
-                  payload.length
-                ) {
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
                   return (
                     <div className="custom-tooltip">
-                      <p>
-                        {
-                          payload[0]
-                            .payload.day
-                        }
-                      </p>
-
-                      <h4>
-                        {
-                          payload[0]
-                            .value
-                        }{" "}
-                        Completed
-                      </h4>
+                      <p>{payload[0].payload.day}</p>
+                      <h4>{payload[0].value} Completed</h4>
                     </div>
                   );
                 }
-
                 return null;
               }}
             />
 
-            <Bar
-              dataKey="completed"
-              radius={[8, 8, 0, 0]}
-              barSize={24}
-              cursor="pointer"
-            >
-              {weeklyData.map(
-                (entry, index) => (
-                  <Cell
-                    key={index}
-                    className="chart-bar"
-                    fill={
-                      hoverIndex ===
-                      index
-                        ? "#a78bfa"
-                        : "#7c3aed"
-                    }
-                    onMouseEnter={() =>
-                      setHoverIndex(
-                        index
-                      )
-                    }
-                    onMouseLeave={() =>
-                      setHoverIndex(
-                        null
-                      )
-                    }
-                  />
-                )
-              )}
+            <Bar dataKey="completed" radius={[8, 8, 0, 0]} barSize={24} cursor="pointer">
+              {weeklyData.map((entry, index) => (
+                <Cell
+                  key={index}
+                  className="chart-bar"
+                  fill={hoverIndex === index ? '#a78bfa' : '#7c3aed'}
+                  onMouseEnter={() => setHoverIndex(index)}
+                  onMouseLeave={() => setHoverIndex(null)}
+                />
+              ))}
             </Bar>
+
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Day Navigation */}
       <div className="day-nav">
         <button
           className="btn secondary-btn"
           onClick={() => {
-            const prev =
-              new Date(
-                selectedDate
-              );
-
-            prev.setDate(
-              prev.getDate() - 1
-            );
-
-            navigate(
-              "/dashboard",
-              {
-                state: {
-                  tasks,
-                  selectedDate:
-                    prev,
-                },
-              }
-            );
+            const prev = new Date(selectedDate);
+            prev.setDate(prev.getDate() - 1);
+            navigate('/dashboard', { state: { tasks, selectedDate: prev } });
           }}
         >
           ← Prev
@@ -373,57 +171,29 @@ function Dashboard() {
         <button
           className="btn secondary-btn"
           onClick={() => {
-            const next =
-              new Date(
-                selectedDate
-              );
-
-            next.setDate(
-              next.getDate() + 1
-            );
-
-            navigate(
-              "/dashboard",
-              {
-                state: {
-                  tasks,
-                  selectedDate:
-                    next,
-                },
-              }
-            );
+            const next = new Date(selectedDate);
+            next.setDate(next.getDate() + 1);
+            navigate('/dashboard', { state: { tasks, selectedDate: next } });
           }}
         >
           Next →
         </button>
       </div>
 
-      {/* =========================
-          SCORE
-      ========================= */}
+      {/* Score Box */}
       <div className="score-box compact">
         <h2>Score</h2>
-
         <h1>{score}</h1>
-
         <p>
-          {score >= 75
-            ? "Excellent"
-            : score >= 50
-            ? "Good"
-            : "Focus"}
+          {score >= 75 ? 'Excellent' : score >= 50 ? 'Good' : 'Focus'}
         </p>
       </div>
 
-      {/* =========================
-          STREAK
-      ========================= */}
+      {/* Streak Box */}
       <div className="streak-box compact">
-        🔥{" "}
-        <strong>
-          {streak} day streak
-        </strong>
+        🔥 <strong>{streak} day streak</strong>
       </div>
+
     </div>
   );
 }

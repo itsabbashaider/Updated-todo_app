@@ -1,27 +1,18 @@
-const ConfirmModal = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  message,
-}) => {
+// ─── Confirmation Modal Component ─────────────────────────────────────────────
+const ConfirmModal = ({ isOpen, onClose, onConfirm, message }) => {
+  
   if (!isOpen) return null;
 
   return (
-    <div
-      className="confirm-overlay"
-      onClick={onClose}
-    >
-      <div
-        className="confirm-modal"
-        onClick={(e) =>
-          e.stopPropagation()
-        }
-      >
+    <div className="confirm-overlay" onClick={onClose}>
+      
+      <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+        
         <h3>Confirm!</h3>
-
         <p>{message}</p>
 
         <div className="confirm-actions">
+          
           <button
             type="button"
             className="Yes btn danger"
@@ -37,8 +28,11 @@ const ConfirmModal = ({
           >
             No
           </button>
+
         </div>
+
       </div>
+
     </div>
   );
 };

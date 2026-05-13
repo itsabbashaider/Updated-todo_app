@@ -3,30 +3,35 @@ require('dotenv').config({
 });
 
 module.exports = {
+
+  // ─── Development ────────────────────────────────────────────────────────────
   development: {
-    username: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_DATABASE || 'todo_db',
-    host: process.env.DB_HOST || '127.0.0.1',
-    dialect: process.env.DB_DIALECT || 'postgres',
-    port: process.env.DB_PORT || 5432,
+    username : process.env.DB_USERNAME || 'postgres',
+    password : process.env.DB_PASSWORD || 'postgres',
+    database : process.env.DB_DATABASE || 'todo_db',
+    host     : process.env.DB_HOST     || '127.0.0.1',
+    dialect  : process.env.DB_DIALECT  || 'postgres',
+    port     : process.env.DB_PORT     || 5432,
   },
 
+  // ─── Test ────────────────────────────────────────────────────────────────────
   test: {
-    username: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_DATABASE_TEST || 'todo_test_db',
-    host: process.env.DB_HOST || '127.0.0.1',
-    dialect: process.env.DB_DIALECT || 'postgres',
-    port: process.env.DB_PORT || 5432,
+    username : process.env.DB_USERNAME      || 'postgres',
+    password : process.env.DB_PASSWORD      || 'postgres',
+    database : process.env.DB_DATABASE_TEST || 'todo_test_db',
+    host     : process.env.DB_HOST          || '127.0.0.1',
+    dialect  : process.env.DB_DIALECT       || 'postgres',
+    port     : process.env.DB_PORT          || 5432,
   },
 
+  // ─── Production ──────────────────────────────────────────────────────────────
   production: {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE_PROD,
-    host: process.env.DB_HOST,
-    dialect: process.env.DB_DIALECT,
-    port: process.env.DB_PORT || 5432,
+    username : process.env.DB_USERNAME,
+    password : process.env.DB_PASSWORD,
+    database : process.env.DB_DATABASE_PROD,
+    host     : process.env.DB_HOST,
+    dialect  : process.env.DB_DIALECT,
+    port     : process.env.DB_PORT || 5432,
   },
+
 };

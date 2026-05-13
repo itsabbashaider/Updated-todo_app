@@ -1,7 +1,9 @@
-const express = require("express");
-const router = express.Router();
-const taskRoutes = require("./task.routes");
+// ─── Dependencies ─────────────────────────────────────────────────────────────
+const express    = require('express');
+const router     = express.Router();
+const taskRoutes = require('./task.routes');
 
-router.use("/tasks", taskRoutes);
+// ─── Routes ───────────────────────────────────────────────────────────────────
+router.use('/tasks', taskRoutes);
 
 module.exports = router;

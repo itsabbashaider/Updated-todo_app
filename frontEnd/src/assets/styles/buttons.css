@@ -1,55 +1,32 @@
 /* =========================
-   🔘 BUTTONS
+   🔘 BASE BUTTON
 ========================= */
 
-.dashboard-btn {
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #8b5cf6
-  );
-
-  color: white;
-
-  border: none;
-  border-radius: 14px;
-
-  box-shadow:
-    0 10px 24px
-      rgba(99, 102, 241, 0.35);
-
-  transition: all 0.2s ease;
-}
-
-.dashboard-btn:hover {
-  transform: translateY(-2px);
-
-  background: linear-gradient(
-    135deg,
-    #7c3aed,
-    #6366f1
-  );
-}
-
 .btn {
-  padding: 10px 14px;
-
+  padding      : 10px 14px;
   border-radius: 14px;
-
-  border: none;
-
-  cursor: pointer;
-
-  font-weight: 600;
+  border       : none;
+  cursor       : pointer;
+  font-weight  : 600;
+  font-size    : 13px;
 
   transition: all 0.2s ease;
-
-  font-size: 13px;
 }
 
 .btn:hover {
   transform: translateY(-2px);
 }
+
+.btn:disabled {
+  background-color: #b0b0b0;
+  color           : #6e6e6e;
+  cursor          : not-allowed;
+  opacity         : 0.6;
+}
+
+/* =========================
+   🎨 BUTTON VARIANTS
+========================= */
 
 .btn.primary {
   background: linear-gradient(
@@ -74,40 +51,66 @@
 }
 
 .btn.secondary {
-  background:
-    rgba(255, 255, 255, 0.08);
-
-  color: #e5e7eb;
-
-  border: 1px solid
-    rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  color      : #e5e7eb;
+  border     : 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .btn.secondary:hover {
-  background:
-    rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .btn.success {
-  background:
-    rgba(34, 197, 94, 0.6);
-
-  color: #00491b;
+  background: rgba(34, 197, 94, 0.6);
+  color     : #00491b;
 }
 
 .btn.warning {
-  background:
-    rgba(251, 191, 36, 0.15);
-
-  color: #ffcc00;
+  background: rgba(251, 191, 36, 0.15);
+  color     : #ffcc00;
 }
 
 .btn.danger {
-  background:
-    rgba(255, 0, 0, 0.15);
-
-  color: #d0d0d0;
+  background: rgba(255, 0, 0, 0.15);
+  color     : #d0d0d0;
 }
+
+/* =========================
+   🔵 DASHBOARD BUTTON
+========================= */
+
+.dashboard-btn {
+  background: linear-gradient(
+    135deg,
+    #6366f1,
+    #8b5cf6
+  );
+
+  color : white;
+  border: none;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 10px 24px
+      rgba(99, 102, 241, 0.35);
+
+  transition: all 0.2s ease;
+}
+
+.dashboard-btn:hover {
+  transform: translateY(-2px);
+
+  background: linear-gradient(
+    135deg,
+    #7c3aed,
+    #6366f1
+  );
+}
+
+/* =========================
+   ✖️ CLOSE BUTTON
+========================= */
 
 .close-btn {
   background: linear-gradient(
@@ -117,8 +120,7 @@
   );
 
   position: relative;
-
-  color: white;
+  color   : white;
 
   box-shadow:
     0 10px 24px
@@ -133,16 +135,16 @@
   );
 }
 
+/* =========================
+   🔲 SECONDARY BUTTON
+========================= */
+
 .btn.secondary-btn {
-  background:
-    rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  color     : white;
+  width     : 400px;
 
-  width: 400px;
-
-  color: white;
-
-  border: 1px solid
-    rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 
   box-shadow:
     0 8px 20px
@@ -150,13 +152,5 @@
 }
 
 .btn.secondary-btn:hover {
-  background:
-    rgba(255, 255, 255, 0.14);
-}
-
-.btn:disabled {
-  background-color: #b0b0b0;
-  color: #6e6e6e;
-  cursor: not-allowed;
-  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.14);
 }

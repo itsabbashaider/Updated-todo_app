@@ -1,40 +1,43 @@
-"use strict";
+'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-  const Task = sequelize.define(
-    "Task",
-    {
-      task_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
 
-      title: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+  // ─── Model Definition ─────────────────────────────────────────────────────────
+  const Task = sequelize.define('Task', {
 
-      description: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-
-      completed: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-
-      completed_at: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+    // ─── Primary Key ────────────────────────────────────────────────────────────
+    task_id: {
+      type         : DataTypes.INTEGER,
+      primaryKey   : true,
+      autoIncrement: true,
     },
-    {
-      tableName: "Tasks",
-      timestamps: true,
+
+    // ─── Fields ─────────────────────────────────────────────────────────────────
+    title: {
+      type     : DataTypes.STRING,
+      allowNull: false,
     },
-  );
+
+    description: {
+      type     : DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    completed: {
+      type        : DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+
+    completed_at: {
+      type     : DataTypes.DATE,
+      allowNull: true,
+    },
+
+  }, {
+    tableName : 'Tasks',
+    timestamps: true,
+  });
 
   return Task;
+
 };
