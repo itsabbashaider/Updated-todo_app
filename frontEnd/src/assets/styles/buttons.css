@@ -1,156 +1,110 @@
-/* =========================
-   🔘 BASE BUTTON
-========================= */
-
-.btn {
-  padding      : 10px 14px;
-  border-radius: 14px;
-  border       : none;
-  cursor       : pointer;
-  font-weight  : 600;
-  font-size    : 13px;
-
-  transition: all 0.2s ease;
+.btn,
+.dashboard-btn {
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
+.btn:hover:not(:disabled),
+.dashboard-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+.btn:focus-visible,
+.dashboard-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
 }
 
 .btn:disabled {
-  background-color: #b0b0b0;
-  color           : #6e6e6e;
-  cursor          : not-allowed;
-  opacity         : 0.6;
+  color: var(--text-soft);
+  background: var(--bg);
+  border-color: var(--border);
+  cursor: not-allowed;
+  opacity: 0.8;
+  transform: none;
+  box-shadow: none;
 }
 
-/* =========================
-   🎨 BUTTON VARIANTS
-========================= */
-
-.btn.primary {
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #8b5cf6
-  );
-
-  color: white;
-
-  box-shadow:
-    0 10px 24px
-      rgba(99, 102, 241, 0.35);
+.btn.primary,
+.dashboard-btn,
+.close-btn {
+  color: var(--primary-contrast);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
-.btn.primary:hover {
-  background: linear-gradient(
-    135deg,
-    #7c3aed,
-    #6366f1
-  );
+.btn.primary:hover:not(:disabled),
+.dashboard-btn:hover,
+.close-btn:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
-.btn.secondary {
-  background: rgba(255, 255, 255, 0.08);
-  color      : #e5e7eb;
-  border     : 1px solid rgba(255, 255, 255, 0.08);
+.btn.secondary,
+.btn.secondary-btn {
+  color: var(--text-muted);
+  background: var(--surface);
+  border-color: var(--border-strong);
 }
 
-.btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.12);
+.btn.secondary:hover:not(:disabled),
+.btn.secondary-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-soft);
+  border-color: var(--accent);
 }
 
 .btn.success {
-  background: rgba(34, 197, 94, 0.6);
-  color     : #00491b;
+  color: var(--success-text);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.btn.success:hover:not(:disabled) {
+  background: var(--success-bg-strong);
+  border-color: var(--success-border-strong);
 }
 
 .btn.warning {
-  background: rgba(251, 191, 36, 0.15);
-  color     : #ffcc00;
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+
+.btn.warning:hover:not(:disabled) {
+  background: var(--warning-bg-strong);
+  border-color: var(--warning-border-strong);
 }
 
 .btn.danger {
-  background: rgba(255, 0, 0, 0.15);
-  color     : #d0d0d0;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
 }
 
-/* =========================
-   🔵 DASHBOARD BUTTON
-========================= */
-
-.dashboard-btn {
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #8b5cf6
-  );
-
-  color : white;
-  border: none;
-
-  border-radius: 14px;
-
-  box-shadow:
-    0 10px 24px
-      rgba(99, 102, 241, 0.35);
-
-  transition: all 0.2s ease;
+.btn.danger:hover:not(:disabled) {
+  background: var(--danger-bg-strong);
+  border-color: var(--danger-border-strong);
 }
-
-.dashboard-btn:hover {
-  transform: translateY(-2px);
-
-  background: linear-gradient(
-    135deg,
-    #7c3aed,
-    #6366f1
-  );
-}
-
-/* =========================
-   ✖️ CLOSE BUTTON
-========================= */
-
-.close-btn {
-  background: linear-gradient(
-    135deg,
-    #6366f1,
-    #8b5cf6
-  );
-
-  position: relative;
-  color   : white;
-
-  box-shadow:
-    0 10px 24px
-      rgba(99, 102, 241, 0.35);
-}
-
-.close-btn:hover {
-  background: linear-gradient(
-    135deg,
-    #7c3aed,
-    #6366f1
-  );
-}
-
-/* =========================
-   🔲 SECONDARY BUTTON
-========================= */
 
 .btn.secondary-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color     : white;
-  width     : 400px;
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  box-shadow:
-    0 8px 20px
-      rgba(0, 0, 0, 0.18);
+  width: auto;
 }
 
-.btn.secondary-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+.close-btn {
+  width: 100%;
+  margin-top: 4px;
 }

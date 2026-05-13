@@ -10,6 +10,7 @@ import CalendarStrip from '../components/calendar-modal.component';
 import ConfirmModal from '../components/confirmation-modal.component';
 import TaskDetailModal from '../components/task-details-modal.component';
 import ValidationErrorModal from '../components/validation-error-modal.component';
+import ThemePresetSwitcher from '../components/theme-preset-switcher.component';
 
 // ─── Home Page ────────────────────────────────────────────────────────────────
 function Home() {
@@ -70,16 +71,22 @@ function Home() {
   return (
     <div className="app-container">
       
-      <h1 className="app-title">Todo App</h1>
+      <div className="app-topbar">
+        <div>
+          <h1 className="app-title">Todo App</h1>
 
-      <p className="current-date">
-        {selectedDate.toLocaleDateString('en-US', {
-          weekday : 'short',
-          month   : 'short',
-          day     : 'numeric',
-          year    : 'numeric',
-        })}
-      </p>
+          <p className="current-date">
+            {selectedDate.toLocaleDateString('en-US', {
+              weekday : 'short',
+              month   : 'short',
+              day     : 'numeric',
+              year    : 'numeric',
+            })}
+          </p>
+        </div>
+
+        <ThemePresetSwitcher />
+      </div>
 
       {error && <div className="error-box">{error}</div>}
 

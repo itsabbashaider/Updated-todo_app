@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import ThemePresetSwitcher from '../components/theme-preset-switcher.component';
 
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 function Dashboard() {
@@ -82,6 +83,8 @@ function Dashboard() {
         </div>
 
         <div className="dashboard-actions">
+          <ThemePresetSwitcher />
+
           <button className="btn secondary" onClick={() => navigate('/')}>
             Back
           </button>
@@ -123,7 +126,7 @@ function Dashboard() {
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={weeklyData}>
             
-            <XAxis dataKey="day" stroke="#9ca3af" />
+            <XAxis dataKey="day" stroke="var(--text-soft)" />
 
             <Tooltip
               content={({ active, payload }) => {
@@ -144,7 +147,7 @@ function Dashboard() {
                 <Cell
                   key={index}
                   className="chart-bar"
-                  fill={hoverIndex === index ? '#a78bfa' : '#7c3aed'}
+                  fill={hoverIndex === index ? 'var(--accent-hover)' : 'var(--accent)'}
                   onMouseEnter={() => setHoverIndex(index)}
                   onMouseLeave={() => setHoverIndex(null)}
                 />
