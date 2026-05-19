@@ -1,7 +1,7 @@
 // ─── Dependencies ─────────────────────────────────────────────────────────────
 const taskService   = require('../services/task.service');
 const asyncHandler  = require('../middlewares/async-handler.middleware');
-const HTTP_STATUSES = require('../constants/httpStatuses');
+const HTTP_STATUSES = require('../constants/http-status.constant');
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 exports.create = asyncHandler(async (req, res) => {

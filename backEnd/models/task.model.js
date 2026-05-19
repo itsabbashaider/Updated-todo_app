@@ -1,42 +1,98 @@
-'use strict';
+"use strict";
 
 module.exports = (sequelize, DataTypes) => {
 
-  // ─── Model Definition ─────────────────────────────────────────────────────────
-  const Task = sequelize.define('Task', {
+  const Task = sequelize.define(
 
-    // ─── Primary Key ────────────────────────────────────────────────────────────
-    task_id: {
-      type         : DataTypes.INTEGER,
-      primaryKey   : true,
-      autoIncrement: true,
+    "Task",
+
+    {
+
+      task_id: {
+
+        type:
+          DataTypes.INTEGER,
+
+        primaryKey:
+          true,
+
+        autoIncrement:
+          true,
+
+      },
+
+      title: {
+
+        type:
+          DataTypes.STRING,
+
+        allowNull:
+          false,
+
+      },
+
+      description: {
+
+        type:
+          DataTypes.TEXT,
+
+        allowNull:
+          true,
+
+      },
+
+      completed: {
+
+        type:
+          DataTypes.BOOLEAN,
+
+        defaultValue:
+          false,
+
+      },
+
+      priority: {
+
+        type:
+          DataTypes.STRING,
+
+        allowNull:
+          false,
+
+        defaultValue:
+          "low",
+
+      },
+
+      completed_at: {
+
+        type:
+          DataTypes.DATE,
+
+        allowNull:
+          true,
+
+      },
+
     },
 
-    // ─── Fields ─────────────────────────────────────────────────────────────────
-    title: {
-      type     : DataTypes.STRING,
-      allowNull: false,
-    },
+    {
 
-    description: {
-      type     : DataTypes.TEXT,
-      allowNull: true,
-    },
+      tableName:
+        "Tasks",
 
-    completed: {
-      type        : DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
+      timestamps:
+        true,
 
-    completed_at: {
-      type     : DataTypes.DATE,
-      allowNull: true,
-    },
+      createdAt:
+        "created_at",
 
-  }, {
-    tableName : 'Tasks',
-    timestamps: true,
-  });
+      updatedAt:
+        "updated_at",
+
+    }
+
+  );
 
   return Task;
 

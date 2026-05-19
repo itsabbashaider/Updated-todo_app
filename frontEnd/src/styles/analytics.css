@@ -1,0 +1,882 @@
+/* ============================================
+   ANALYTICS PAGE
+   Uses ONLY global variables
+============================================ */
+
+/* ============================================
+   MAIN LAYOUT
+============================================ */
+
+.analytics-layout {
+  display: flex;
+  min-height: 100vh;
+
+  background: var(--page-bg);
+}
+
+.analytics-main {
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding: var(--space-2xl);
+
+  background: var(--page-bg);
+}
+
+/* ============================================
+   HEADER SECTION
+============================================ */
+
+.analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: var(--space-xl);
+
+  margin-bottom: var(--space-2xl);
+}
+
+.analytics-header > div {
+  flex: 1;
+}
+
+.analytics-header h1 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.analytics-header p {
+  margin: 6px 0 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.95rem;
+}
+
+/* ============================================
+   DATE RANGE SELECTOR
+============================================ */
+
+.date-range-selector {
+  display: flex;
+  gap: var(--space-sm);
+
+  padding: 6px;
+
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-soft);
+}
+
+.range-btn {
+  padding: var(--space-sm) var(--space-lg);
+
+  background: transparent;
+
+  border: none;
+  border-radius: var(--radius-sm);
+
+  color: var(--text-muted);
+
+  cursor: pointer;
+
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  transition:
+    background var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.range-btn:hover {
+  background: var(--surface-soft);
+
+  color: var(--text);
+
+  transform: translateY(-1px);
+}
+
+.range-btn.active {
+  background: var(--primary);
+
+  color: var(--primary-contrast);
+
+  box-shadow: var(--shadow-soft);
+}
+
+/* ============================================
+   METRICS GRID
+============================================ */
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(160px, 1fr));
+
+  gap: var(--space-lg);
+
+  margin-bottom: var(--space-2xl);
+}
+
+/* ============================================
+   ANALYTICS CARD
+============================================ */
+
+.analytics-card {
+  position: relative;
+
+  overflow: hidden;
+
+  padding: 22px;
+
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+
+  color: var(--text);
+
+  box-shadow: var(--shadow-soft);
+
+  transition:
+    transform var(--transition-slow),
+    border-color var(--transition),
+    box-shadow var(--transition),
+    background var(--transition);
+}
+
+.analytics-card::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--primary),
+      var(--accent)
+    );
+
+  opacity: 0;
+
+  transition: opacity var(--transition);
+}
+
+.analytics-card:hover {
+  background: var(--surface-hover);
+
+  border-color: var(--border-strong);
+
+  transform: translateY(-2px);
+
+  box-shadow: var(--shadow);
+}
+
+.analytics-card:hover::before {
+  opacity: 1;
+}
+
+.analytics-card h3 {
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.analytics-card h2 {
+  margin: var(--space-md) 0 0;
+
+  color: var(--text);
+
+  font-size: 2rem;
+  font-weight: 700;
+
+  line-height: 1.2;
+}
+
+.card-subtitle {
+  margin: 6px 0 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.8rem;
+}
+
+/* ============================================
+   STREAK CARD
+============================================ */
+
+.streak-card {
+  position: relative;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--warning-bg),
+      transparent
+    );
+
+  border-color: var(--warning-border);
+}
+
+.streak-icon {
+  position: absolute;
+  right: var(--space-lg);
+  bottom: 30px;
+
+  opacity: 0.6;
+
+  font-size: 2.5rem;
+
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   CHARTS GRID
+============================================ */
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+
+  gap: 22px;
+}
+
+.analytics-column {
+  display: flex;
+  flex-direction: column;
+
+  gap: 22px;
+}
+
+/* ============================================
+   CHART CARD
+============================================ */
+
+.chart-card {
+  margin-bottom: 20px;
+  padding: var(--space-xl);
+
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+
+  box-shadow: var(--shadow-soft);
+
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.chart-card:hover {
+  border-color: var(--border-strong);
+
+  transform: translateY(-2px);
+
+  box-shadow: var(--shadow);
+}
+
+.analytics-column .chart-card {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.chart-card h3 {
+  margin: 0;
+
+  color: var(--text);
+
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.chart-card p {
+  margin: 4px 0 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: var(--space-xl);
+}
+
+.chart-header > div {
+  flex: 1;
+}
+
+/* ============================================
+   CHART WRAPPER
+============================================ */
+
+.chart-wrapper {
+  padding: var(--space-lg);
+
+  background: var(--surface-soft);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+/* ============================================
+   HEATMAP
+============================================ */
+
+.heatmap-container {
+  margin-top: 20px;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+
+  gap: 4px;
+
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+
+  background: var(--page-bg);
+
+  border-radius: var(--radius-sm);
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+
+  border: 1px solid transparent;
+  border-radius: 4px;
+
+  cursor: pointer;
+
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.1);
+
+  border-color: var(--border);
+
+  box-shadow: var(--shadow-soft);
+}
+
+/* ---------- Heat Levels ---------- */
+
+.heatmap-empty {
+  background: var(--heatmap-empty);
+}
+
+.heatmap-low {
+  background: var(--heatmap-low);
+}
+
+.heatmap-medium {
+  background: var(--heatmap-medium);
+}
+
+.heatmap-high {
+  background: var(--heatmap-high);
+}
+
+.heatmap-max {
+  background: var(--heatmap-max);
+}
+
+/* ============================================
+   HEATMAP LEGEND
+============================================ */
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: var(--space-md);
+
+  color: var(--text-muted);
+
+  font-size: 0.8rem;
+}
+
+.legend-cells {
+  display: flex;
+  gap: 4px;
+}
+
+.legend-cells .heatmap-cell {
+  width: 12px;
+  height: 12px;
+}
+
+/* ============================================
+   WEEKLY COMPARISON
+============================================ */
+
+.weekly-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px 0;
+  margin-bottom: 20px;
+}
+
+.week-item {
+  flex: 1;
+
+  text-align: center;
+}
+
+.week-label {
+  display: block;
+
+  margin-bottom: var(--space-sm);
+
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.week-stat {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.week-number {
+  color: var(--primary);
+
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.week-subtext {
+  color: var(--text-muted);
+
+  font-size: 0.75rem;
+}
+
+.comparison-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 4px;
+
+  flex-shrink: 0;
+}
+
+.arrow {
+  font-size: 2rem;
+
+  transition: transform var(--transition);
+}
+
+.arrow.up,
+.percentage.positive {
+  color: var(--success-text);
+}
+
+.arrow.down,
+.percentage.negative {
+  color: var(--danger-text);
+}
+
+.percentage {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* ============================================
+   INSIGHTS SECTION
+============================================ */
+
+.insights-section {
+  margin-bottom: var(--space-2xl);
+}
+
+.insights-section h3 {
+  margin: 0 0 var(--space-lg);
+
+  color: var(--text);
+
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(250px, 1fr));
+
+  gap: var(--space-lg);
+}
+
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+
+  gap: var(--space-md);
+
+  padding: 18px;
+
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.insight-card:hover {
+  border-color: var(--border-strong);
+
+  transform: translateY(-2px);
+
+  box-shadow: var(--shadow-soft);
+}
+
+.insight-icon {
+  margin-top: 2px;
+
+  flex-shrink: 0;
+
+  font-size: 1.8rem;
+}
+
+.insight-content {
+  flex: 1;
+}
+
+.insight-content h4 {
+  margin: 0 0 4px;
+
+  color: var(--text);
+
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.insight-content p {
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ============================================
+   TIMELINE
+============================================ */
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 95px;
+
+  margin-top: var(--space-xl);
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 140px;
+
+  align-items: center;
+
+  gap: var(--space-lg);
+}
+
+.timeline-date {
+  color: var(--text-muted);
+
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.timeline-progress {
+  position: relative;
+
+  overflow: hidden;
+
+  width: 100%;
+  height: 12px;
+
+  background: var(--border);
+
+  border-radius: var(--radius-full);
+}
+
+.timeline-progress-fill {
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--primary),
+      var(--accent)
+    );
+
+  transition: width 0.4s ease;
+}
+
+.timeline-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  gap: 4px;
+}
+
+.timeline-percent {
+  color: var(--text);
+
+  font-weight: 700;
+}
+
+.timeline-tasks {
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+}
+
+/* ============================================
+   ANIMATIONS
+============================================ */
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* ============================================
+   RESPONSIVE
+============================================ */
+
+@media (max-width: 1200px) {
+  .charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .analytics-header {
+    flex-direction: column;
+
+    gap: var(--space-lg);
+  }
+
+  .analytics-header h1 {
+    font-size: 2rem;
+  }
+
+  .date-range-selector {
+    width: 100%;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-stats {
+    grid-template-columns:
+      repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-main {
+    padding: 20px;
+  }
+
+  .analytics-header {
+    margin-bottom: var(--space-xl);
+  }
+
+  .analytics-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: var(--space-md);
+  }
+
+  .analytics-card {
+    padding: var(--space-lg);
+  }
+
+  .analytics-card h2 {
+    font-size: 1.75rem;
+  }
+
+  .chart-card {
+    padding: 18px;
+  }
+
+  .weekly-comparison {
+    padding: 16px 0;
+  }
+
+  .week-number {
+    font-size: 1.5rem;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .date-range-selector {
+    flex-wrap: wrap;
+  }
+
+  .range-btn {
+    flex: 1;
+    min-width: 60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .analytics-main {
+    padding: var(--space-lg);
+  }
+
+  .analytics-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .analytics-header p {
+    font-size: 0.85rem;
+  }
+
+  .analytics-stats {
+    grid-template-columns: 1fr;
+
+    gap: var(--space-md);
+  }
+
+  .analytics-card {
+    padding: 14px;
+  }
+
+  .analytics-card h2 {
+    font-size: 1.5rem;
+  }
+
+  .chart-card {
+    padding: 14px;
+  }
+
+  .chart-card h3 {
+    font-size: 1rem;
+  }
+
+  .heatmap-grid {
+    gap: 3px;
+
+    padding: var(--space-sm);
+  }
+
+  .heatmap-legend {
+    gap: var(--space-sm);
+
+    font-size: 0.75rem;
+  }
+
+  .weekly-comparison {
+    flex-direction: column;
+
+    gap: var(--space-md);
+
+    padding: 12px 0;
+  }
+
+  .week-number {
+    font-size: 1.25rem;
+  }
+
+  .comparison-arrow {
+    order: 2;
+
+    margin-top: var(--space-sm);
+  }
+
+  .week-item:nth-child(2) {
+    order: 3;
+  }
+
+  .insight-card {
+    gap: 10px;
+
+    padding: 14px;
+  }
+
+  .insight-icon {
+    font-size: 1.5rem;
+  }
+
+  .insight-content h4 {
+    font-size: 0.9rem;
+  }
+
+  .insight-content p {
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================
+   REDUCED MOTION
+============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,284 @@
+:root {
+  /* ======================================================
+     BASE LAYOUT
+  ====================================================== */
+
+  --page-bg: #0d1117;
+  --selection-bg: #264f78;
+
+  /* ======================================================
+     SCROLLBAR
+  ====================================================== */
+
+  --scrollbar-track: #010409;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-thumb-hover: #484f58;
+
+  /* ======================================================
+     CORE COLORS
+  ====================================================== */
+
+  --bg: #0d1117;
+
+  --surface: #161b22;
+  --surface-soft: #21262d;
+  --surface-hover: #1f2630;
+
+  /* ======================================================
+     TYPOGRAPHY
+  ====================================================== */
+
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --text-soft: #6e7681;
+
+  /* ======================================================
+     BORDERS
+  ====================================================== */
+
+  --border: #30363d;
+  --border-strong: #484f58;
+
+  /* ======================================================
+     PRIMARY
+  ====================================================== */
+
+  --primary: #238636;
+  --primary-hover: #2ea043;
+  --primary-contrast: #ffffff;
+
+  /* ======================================================
+     ACCENT
+  ====================================================== */
+
+  --accent: #58a6ff;
+
+  /* ======================================================
+     SUCCESS
+  ====================================================== */
+
+  --success-text: #3fb950;
+  --success-bg: rgba(46, 160, 67, 0.12);
+  --success-bg-strong: rgba(46, 160, 67, 0.2);
+  --success-border: rgba(46, 160, 67, 0.4);
+  --success-border-strong: #2ea043;
+
+  /* ======================================================
+     WARNING
+  ====================================================== */
+
+  --warning-text: #d29922;
+  --warning-bg: rgba(210, 153, 34, 0.12);
+  --warning-bg-strong: rgba(210, 153, 34, 0.2);
+  --warning-border: rgba(210, 153, 34, 0.4);
+  --warning-border-strong: #f2cc60;
+
+  /* ======================================================
+     DANGER
+  ====================================================== */
+
+  --danger-text: #f85149;
+  --danger-bg: rgba(248, 81, 73, 0.12);
+  --danger-bg-strong: rgba(248, 81, 73, 0.2);
+  --danger-border: rgba(248, 81, 73, 0.4);
+  --danger-border-strong: #ff7b72;
+
+  /* ======================================================
+     INPUTS
+  ====================================================== */
+
+  --input-bg: #0d1117;
+  --input-border-focus: #58a6ff;
+
+  /* ======================================================
+     OVERLAY
+  ====================================================== */
+
+  --modal-overlay-bg: rgba(1, 4, 9, 0.8);
+
+  /* ======================================================
+     SHADOWS
+  ====================================================== */
+
+  --shadow-soft:
+    0 8px 24px rgba(0, 0, 0, 0.35);
+
+  --shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5);
+
+  --shadow-glow:
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+
+  /* ======================================================
+     FOCUS
+  ====================================================== */
+
+  --focus:
+    0 0 0 3px rgba(88, 166, 255, 0.35);
+
+  /* ======================================================
+     RADIUS
+  ====================================================== */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* ======================================================
+     TRANSITIONS
+  ====================================================== */
+
+  --transition-fast: 0.15s ease;
+  --transition: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* ======================================================
+     SPACING
+  ====================================================== */
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* ======================================================
+     HEATMAP
+  ====================================================== */
+
+  --heatmap-empty: #161b22;
+  --heatmap-low: #0e4429;
+  --heatmap-medium: #006d32;
+  --heatmap-high: #26a641;
+  --heatmap-max: #39d353;
+}
+
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+
+  background: var(--page-bg);
+  color: var(--text);
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* =========================================================
+   FORM ELEMENTS
+========================================================= */
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+/* =========================================================
+   TEXT SELECTION
+========================================================= */
+
+::selection {
+  color: var(--text);
+  background: var(--selection-bg);
+}
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+#root {
+  min-height: 100vh;
+}
+
+/* =========================================================
+   ERROR STATES
+========================================================= */
+
+.error-box {
+  margin-top: var(--space-lg);
+  padding: 12px 14px;
+
+  color: var(--danger-text);
+
+  background: var(--danger-bg);
+
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+
+  font-size: 14px;
+}
+
+.error {
+  margin-top: var(--space-xs);
+
+  color: var(--danger-text);
+
+  font-size: 14px;
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+
+    scroll-behavior: auto !important;
+  }
+}

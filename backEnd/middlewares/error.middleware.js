@@ -1,6 +1,6 @@
 // ─── Dependencies ─────────────────────────────────────────────────────────────
 const { AppError, InternalServerError } = require('../utils/errors-classes.util');
-const HTTP_STATUSES                     = require('../constants/httpStatuses');
+const HTTP_STATUSES                     = require('../constants/http-status.constant');
 
 // ─── Error Handler ────────────────────────────────────────────────────────────
 const errorHandler = (err, req, res, next) => {

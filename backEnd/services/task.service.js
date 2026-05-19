@@ -10,7 +10,7 @@ exports.createTask = async (data) => {
 // ─── Get All Tasks ────────────────────────────────────────────────────────────
 exports.getTasks = async () => {
   return await Task.findAll({
-    order: [['createdAt', 'DESC']],
+    order: [['created_at', 'DESC']],
   });
 };
 

@@ -1,0 +1,16 @@
+.task-list {
+  flex: 1;
+  min-height: 0;
+  margin-top: 22px;
+  padding-right: 6px;
+  overflow-y: auto;
+}
+
+.task-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.25);
+  border-radius: 999px;
+}

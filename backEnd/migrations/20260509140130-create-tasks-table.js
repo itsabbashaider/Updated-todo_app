@@ -4,54 +4,122 @@ module.exports = {
 
   // ─── Up ───────────────────────────────────────────────────────────────────────
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Tasks', {
 
-      // ─── Primary Key ──────────────────────────────────────────────────────────
-      task_id: {
-        type         : Sequelize.INTEGER,
-        primaryKey   : true,
-        autoIncrement: true,
-        allowNull    : false,
-      },
+    await queryInterface.createTable(
 
-      // ─── Fields ───────────────────────────────────────────────────────────────
-      title: {
-        type     : Sequelize.STRING,
-        allowNull: false,
-      },
+      'Tasks',
 
-      description: {
-        type     : Sequelize.TEXT,
-        allowNull: true,
-      },
+      {
 
-      completed: {
-        type        : Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
+        // ─── Primary Key ────────────────────────────────────────────────────────
 
-      completed_at: {
-        type     : Sequelize.DATE,
-        allowNull: true,
-      },
+        task_id: {
 
-      // ─── Timestamps ───────────────────────────────────────────────────────────
-      createdAt: {
-        type     : Sequelize.DATE,
-        allowNull: false,
-      },
+          type:
+            Sequelize.INTEGER,
 
-      updatedAt: {
-        type     : Sequelize.DATE,
-        allowNull: false,
-      },
+          primaryKey:
+            true,
 
-    });
+          autoIncrement:
+            true,
+
+          allowNull:
+            false,
+
+        },
+
+        // ─── Fields ─────────────────────────────────────────────────────────────
+
+        title: {
+
+          type:
+            Sequelize.STRING,
+
+          allowNull:
+            false,
+
+        },
+
+        description: {
+
+          type:
+            Sequelize.TEXT,
+
+          allowNull:
+            true,
+
+        },
+
+        completed: {
+
+          type:
+            Sequelize.BOOLEAN,
+
+          defaultValue:
+            false,
+
+        },
+
+        priority: {
+
+          type:
+            Sequelize.STRING,
+
+          allowNull:
+            false,
+
+          defaultValue:
+            'low',
+
+        },
+
+        completed_at: {
+
+          type:
+            Sequelize.DATE,
+
+          allowNull:
+            true,
+
+        },
+
+        // ─── TIMESTAMPS ────────────────────────────────────────────────────────
+
+        created_at: {
+
+          type:
+            Sequelize.DATE,
+
+          allowNull:
+            false,
+
+        },
+
+        updated_at: {
+
+          type:
+            Sequelize.DATE,
+
+          allowNull:
+            false,
+
+        },
+
+      }
+
+    );
+
   },
 
-  // ─── Down ─────────────────────────────────────────────────────────────────────
+  // ─── Down ────────────────────────────────────────────────────────────────────
+
   async down(queryInterface) {
-    await queryInterface.dropTable('Tasks');
+
+    await queryInterface.dropTable(
+      'Tasks'
+    );
+
   },
 
 };

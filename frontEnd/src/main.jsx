@@ -1,12 +1,18 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import "./assets/styles/global.css";
-import "./assets/styles/dashboard.css";
-import "./assets/styles/calendar.css";
-import "./assets/styles/buttons.css";
-import "./assets/styles/tasks.css";
-import "./assets/styles/modals.css";
+
+import "./styles/achievements.css"
+import "./styles/global.css";
+import "./styles/buttons.css";
+import "./styles/analytics.css";
+import "./styles/calendar.css";
+import "./styles/home.css";
+import "./styles/modal.css";
+import "./styles/sidebar.css";
+import "./styles/task-card.css";
+import "./styles/task-list.css";
+import "./styles/tasks.css";
 
 import App from "./App.jsx";
 

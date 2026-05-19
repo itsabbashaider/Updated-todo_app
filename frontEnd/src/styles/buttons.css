@@ -1,5 +1,4 @@
-.btn,
-.dashboard-btn {
+.btn {
   min-height: 40px;
   padding: 10px 14px;
   border: 1px solid transparent;
@@ -8,22 +7,15 @@
   font-size: 13px;
   font-weight: 700;
   line-height: 1;
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
-.btn:hover:not(:disabled),
-.dashboard-btn:hover {
+.btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
 }
 
-.btn:focus-visible,
-.dashboard-btn:focus-visible {
+.btn:focus-visible {
   outline: none;
   box-shadow: var(--focus);
 }
@@ -39,29 +31,27 @@
 }
 
 .btn.primary,
-.dashboard-btn,
-.close-btn {
+.close-btn,
+.create-task-btn {
   color: var(--primary-contrast);
   background: var(--primary);
   border-color: var(--primary);
 }
 
 .btn.primary:hover:not(:disabled),
-.dashboard-btn:hover,
-.close-btn:hover {
+.close-btn:hover,
+.create-task-btn:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
 
-.btn.secondary,
-.btn.secondary-btn {
+.btn.secondary {
   color: var(--text-muted);
   background: var(--surface);
   border-color: var(--border-strong);
 }
 
-.btn.secondary:hover:not(:disabled),
-.btn.secondary-btn:hover:not(:disabled) {
+.btn.secondary:hover:not(:disabled) {
   color: var(--text);
   background: var(--surface-soft);
   border-color: var(--accent);
@@ -98,10 +88,6 @@
 .btn.danger:hover:not(:disabled) {
   background: var(--danger-bg-strong);
   border-color: var(--danger-border-strong);
-}
-
-.btn.secondary-btn {
-  width: auto;
 }
 
 .close-btn {

@@ -1,10 +1,7 @@
-import axiosInstance from "./axios.instance";
+import axiosInstance from "./axios-instance.service";
 
 export const getTasks = () =>
   axiosInstance.get("/tasks");
-
-export const getTask = (task_id) =>
-  axiosInstance.get(`/tasks/${task_id}`);
 
 export const createTask = (data) =>
   axiosInstance.post("/tasks", data);

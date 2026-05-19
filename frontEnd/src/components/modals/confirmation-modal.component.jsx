@@ -15,7 +15,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, message }) => {
           
           <button
             type="button"
-            className="Yes btn danger"
+            className="btn danger"
             onClick={onConfirm}
           >
             Yes
@@ -23,7 +23,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, message }) => {
 
           <button
             type="button"
-            className="No btn secondary"
+            className="btn secondary"
             onClick={onClose}
           >
             No
