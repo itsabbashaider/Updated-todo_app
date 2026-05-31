@@ -23,7 +23,7 @@ export const createTaskSchema =
     description:
       yup
         .string()
-        .nullable(),
+        .required("Description is required"),
 
     completed:
       yup
@@ -72,7 +72,7 @@ export const updateTaskSchema =
     description:
       yup
         .string()
-        .nullable(),
+        .required("Description is required"), 
 
     completed:
       yup

@@ -1,341 +1,63 @@
-/* =========================
-   TASKS PAGE - GITHUB DARK ENHANCED
-========================= */
+/* =========================================================
+   TASK CARD COMPONENT
+   Handles individual task cards, actions, priorities, and edit states
+========================================================= */
 
-:root {
-  --text: #f0f6fc;
-  --text-secondary: #8b949e;
-  --text-tertiary: #6e7681;
-  --surface-soft: #0d1117;
-  --surface: #161b22;
-  --surface-hover: #1c2128;
-  --border: #30363d;
-  --border-strong: #484f58;
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.45);
-  --accent-green: #1f6feb;
-  --accent-blue: #58a6ff;
-  --accent-orange: #fb8500;
-}
-
+.modern-task-card,
 .task-card {
   position: relative;
-  margin-bottom: 12px;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   padding: 18px;
   overflow: hidden;
-  color: var(--text);
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(4px);
+  background: linear-gradient(180deg, #11161d, #0d1117);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+  transition:
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
+.modern-task-card::before,
 .task-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(88, 166, 255, 0.08) 0%, transparent 100%);
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(88, 166, 255, 0.07),
+    transparent 45%,
+    rgba(139, 92, 246, 0.05)
+  );
   opacity: 0;
-  transition: opacity 0.25s ease;
   pointer-events: none;
+  transition: opacity var(--transition-fast);
 }
 
+.modern-task-card:hover,
 .task-card:hover {
-  background: var(--surface);
-  border-color: var(--border-strong);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  border-color: rgba(88, 166, 255, 0.35);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
 }
 
+.modern-task-card:hover::before,
 .task-card:hover::before {
   opacity: 1;
 }
 
-.tasks-layout {
-  display: flex;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+.modern-task-card.completed,
+.completed {
+  opacity: 0.72;
 }
 
-.tasks-main {
-  flex: 1;
-  padding: 40px;
-  overflow-x: visible;
-}
-
-/* =========================
-   HEADER
-========================= */
-
-.tasks-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: #0d1117;
-  padding-bottom: 20px;
-}
-
-.tasks-header h1 {
-  margin: 0;
-  color: #f0f6fc;
-  font-size: 2.8rem;
-  font-weight: 800;
-  letter-spacing: -1.2px;
-  background: linear-gradient(135deg, #f0f6fc 0%, #79c0ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: fadeInDown 0.6s ease-out;
-}
-
-.tasks-header p {
-  margin-top: 10px;
-  color: var(--text-secondary);
-  font-size: 16px;
-  font-weight: 400;
-  animation: fadeInUp 0.6s ease-out 0.1s both;
-}
-
-/* =========================
-   CONTROLS
-========================= */
-
-.tasks-controls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 36px;
-  animation: fadeInUp 0.6s ease-out 0.2s both;
-}
-
-.tasks-controls input {
-  flex: 1;
-  height: 48px;
-  padding: 0 20px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tasks-controls input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.tasks-controls input:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-hover);
-}
-
-.tasks-controls input:focus {
-  outline: none;
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
-  background: var(--surface-hover);
-}
-
-.tasks-controls .primary {
-  height: 48px;
-  padding: 0 28px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  background: linear-gradient(135deg, #01450e 0%, #025812 100%);
-  color: white;
-  font-weight: 700;
-  font-size: 15px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 16px rgba(35, 134, 54, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.tasks-controls .primary::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
-}
-
-.tasks-controls .primary:hover {
-  transform: translateY(-3px);
-  background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
-  box-shadow: 0 12px 24px rgba(35, 134, 54, 0.4);
-}
-
-.tasks-controls .primary:active::before {
-  width: 300px;
-  height: 300px;
-}
-
-/* =========================
-   BOARD
-========================= */
-
-.kanban-board {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 28px;
-  animation: fadeInUp 0.6s ease-out 0.3s both;
-
-  /* board stays fixed */
-  height: 100vh;
-  overflow: hidden;
-}
-
-.kanban-column {
-  background: linear-gradient(
-    135deg,
-    var(--surface) 0%,
-    var(--surface-soft) 100%
-  );
-
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
-
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  position: relative;
-
-  /* independent scrolling */
-  height: 85vh;
-  overflow-y: scroll;
-}
-
-/* scrollbar */
-.kanban-column::-webkit-scrollbar {
-  width: 6px;
-}
-
-.kanban-column::-webkit-scrollbar-track {
-  background: transparent;
-   margin-block: 12px;
-}
-
-.kanban-column::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-}
-
-.kanban-column::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-.kanban-column::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.3), transparent);
-}
-
-.kanban-column:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
-}
-
-.kanban-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.kanban-header h3 {
-  margin: 0;
-  color: var(--text);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.kanban-header span {
-  min-width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.kanban-tasks {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* =========================
-   TASK CARD
-========================= */
-
-.modern-task-card {
-  padding: 20px;
-  background: linear-gradient(135deg, var(--surface-soft) 0%, var(--surface) 100%);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  background-clip: padding-box;
-}
-
-.modern-task-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.2), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.modern-task-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--accent-blue);
-  box-shadow: 0 16px 36px rgba(88, 166, 255, 0.15);
-}
-
-.modern-task-card:hover::before {
-  opacity: 1;
-}
-
-/* =========================
-   CARD TOP
-========================= */
-
+/* --- Card Content Structure --- */
 .task-card-top {
   display: flex;
   align-items: flex-start;
@@ -343,304 +65,176 @@
   gap: 14px;
 }
 
-.task-card-top h3 {
+.task-card-top h3,
+.task-card-top h4 {
   margin: 0;
   color: var(--text);
-  font-size: 17px;
-  line-height: 1.5;
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: -0.3px;
+  line-height: 1.5;
+  word-break: break-word;
 }
 
-/* =========================
-   CARD BODY
-========================= */
-
+.modern-task-card p,
 .task-card-body p {
   margin: 0 0 12px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  font-size: 14px;
-  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  word-break: break-word;
 }
 
 .task-date {
-  color: var(--text-tertiary);
+  color: var(--text-soft);
+  display: inline-flex;
+  justify-content: end;
   font-size: 12px;
   font-weight: 500;
 }
 
-/* =========================
-   PRIORITY
-========================= */
+/* --- Card Actions / Buttons --- */
+.task-card-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(48, 54, 61, 0.6);
+}
 
-.priority {
+.task-card-bottom button,
+.save-btn,
+.cancel-btn,
+.complete-btn,
+.edit-btn,
+.delete-btn {
+  height: 40px;
+  padding: 0 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(2px);
-}
-
-.priority.low {
-  color: #e3b341;
-  background: rgba(227, 179, 65, 0.15);
-  border: 1px solid rgba(227, 179, 65, 0.3);
-}
-
-.priority.low:hover {
-  background: rgba(227, 179, 65, 0.22);
-  border-color: rgba(227, 179, 65, 0.5);
-}
-
-.priority.medium {
-  color: #79c0ff;
-  background: rgba(88, 166, 255, 0.15);
-  border: 1px solid rgba(88, 166, 255, 0.3);
-}
-
-.priority.medium:hover {
-  background: rgba(88, 166, 255, 0.22);
-  border-color: rgba(88, 166, 255, 0.5);
-}
-
-.priority.high {
-  color: #ff7b72;
-  background: rgba(248, 81, 73, 0.15);
-  border: 1px solid rgba(248, 81, 73, 0.3);
-}
-
-.priority.high:hover {
-  background: rgba(248, 81, 73, 0.22);
-  border-color: rgba(248, 81, 73, 0.5);
-}
-
-/* =========================
-   ACTIONS
-========================= */
-
-.task-card-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  gap: 10px;
-}
-
-.task-card-bottom button {
-  height: 38px;
-  min-width: 42px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 700;
-  position: relative;
-  overflow: hidden;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
-.task-card-bottom button:hover {
+.task-card-bottom button:hover,
+.save-btn:hover,
+.cancel-btn:hover,
+.complete-btn:hover,
+.edit-btn:hover,
+.delete-btn:hover {
   transform: translateY(-2px);
 }
 
-/* LEFT ACTIONS */
-.edit-btn {
-  background: rgba(88, 166, 255, 0.12);
-  color: #79c0ff;
-  border: 1px solid rgba(88, 166, 255, 0.3);
+.complete-btn {
+  margin-left: auto;
+  background: var(--primary);
+  color: var(--primary-contrast);
 }
 
-.edit-btn:hover {
-  background: rgba(88, 166, 255, 0.2);
-  border-color: rgba(88, 166, 255, 0.5);
-  box-shadow: 0 4px 12px rgba(88, 166, 255, 0.15);
+.save-btn {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border: 1px solid var(--success-border);
+}
+
+.edit-btn {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border: 1px solid var(--warning-border);
 }
 
 .delete-btn {
-  background: rgba(248, 81, 73, 0.12);
-  color: #ff7b72;
-  border: 1px solid rgba(248, 81, 73, 0.3);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border: 1px solid var(--danger-border);
 }
 
-.delete-btn:hover {
-  background: rgba(248, 81, 73, 0.2);
-  border-color: rgba(248, 81, 73, 0.5);
-  box-shadow: 0 4px 12px rgba(248, 81, 73, 0.15);
+.cancel-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
 }
 
-/* COMPLETE BUTTON */
-.complete-btn {
-  margin-left: auto;
-  padding: 0 16px;
-  background: rgba(46, 160, 67, 0.12);
-  color: #7ee787;
-  border: 1px solid rgba(46, 160, 67, 0.3);
-  position: relative;
+/* --- Priority Badges --- */
+.priority {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.complete-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
+.priority.low {
+  color: var(--success-text);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+}
+
+.priority.medium {
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+}
+
+.priority.high {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+}
+
+/* --- Inline Edit Form --- */
+.edit-form {
+  display: grid;
+  gap: 10px;
+}
+
+.edit-form input,
+.edit-form select {
   width: 100%;
-  height: 100%;
-  background: rgba(46, 160, 67, 0.1);
-  transition: left 0.3s ease;
+  height: 42px;
+  padding: 0 14px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
 }
 
-.complete-btn:hover {
-  background: rgba(46, 160, 67, 0.2);
-  border-color: rgba(46, 160, 67, 0.5);
-  box-shadow: 0 4px 12px rgba(46, 160, 67, 0.15);
+.edit-form input:focus,
+.edit-form select:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: var(--focus);
 }
 
-/* =========================
-   COMPLETED
-========================= */
-
-.completed {
-  opacity: 0.55;
-  text-decoration: line-through;
-}
-
-.completed .task-card-top h3 {
-  color: var(--text-tertiary);
-}
-
-/* =========================
-   EMPTY
-========================= */
-
-.empty-state {
-  padding: 48px 24px;
-  text-align: center;
-  border-radius: 16px;
-  border: 2px dashed var(--border);
-  background: linear-gradient(135deg, rgba(13, 17, 23, 0.5), rgba(22, 27, 34, 0.5));
-  transition: all 0.3s ease;
-}
-
-.empty-state:hover {
-  border-color: var(--border-strong);
-  background: linear-gradient(135deg, rgba(13, 17, 23, 0.7), rgba(22, 27, 34, 0.7));
-}
-
-.empty-state p {
-  margin: 0;
-  color: var(--text-tertiary);
-  font-size: 15px;
-  font-weight: 500;
-}
-
-/* =========================
-   DISABLED
-========================= */
-
-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-/* =========================
-   ANIMATIONS
-========================= */
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 1200px) {
-  .tasks-main {
-    padding: 32px;
-  }
-
-  .kanban-board {
-    gap: 20px;
-  }
-}
-
-@media (max-width: 1000px) {
-  .kanban-board {
-    grid-template-columns: 1fr;
-  }
-
-  .tasks-header h1 {
-    font-size: 2.2rem;
-  }
-}
-
-@media (max-width: 700px) {
-  .tasks-main {
-    padding: 20px;
-  }
-
-  .tasks-header {
-    margin-bottom: 24px;
-  }
-
-  .tasks-header h1 {
-    font-size: 1.8rem;
-  }
-
-.tasks-controls {
-  position: sticky;
-  top: 120px;
-  z-index: 99;
-  background: #0d1117;
-  padding: 16px 0;
-}
-
-  .tasks-controls input {
-    width: 100%;
-  }
-
-  .tasks-controls .primary {
-    width: 100%;
-  }
-
+/* --- Responsive Card Overrides --- */
+@media (max-width: 540px) {
   .task-card-bottom {
-    gap: 8px;
+    flex-direction: column;
   }
-
-  .kanban-column {
-    padding: 18px;
-  }
-
-  .modern-task-card {
-    padding: 16px;
-    gap: 14px;
+  
+  .task-card-bottom button,
+  .save-btn,
+  .cancel-btn,
+  .complete-btn,
+  .edit-btn,
+  .delete-btn {
+    width: 100%;
   }
 }

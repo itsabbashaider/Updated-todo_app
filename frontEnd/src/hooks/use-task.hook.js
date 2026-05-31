@@ -1,200 +1,308 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 
 import {
   getTasks,
   createTask,
   deleteTask,
   updateTask,
-} from "../services/task.service";
+} from '../services/task.service';
 
-export function useTasks() {
-  const [tasks, setTasks] = useState([]);
+// ─── Stable Default Filters ──────────────────────────────────────────────────
+const defaultFilters = {};
 
-  const [loading, setLoading] = useState(true);
+// ─── Hook ────────────────────────────────────────────────────────────────────
+export function useTasks(
+  filters = defaultFilters
+) {
+  // ─── State ────────────────────────────────────────────────────────────────
+  const [tasks, setTasks] =
+    useState([]);
 
-  const [error, setError] = useState("");
+  const [loading, setLoading] =
+    useState(true);
 
-  useEffect(() => {
-    let mounted = true;
+  const [error, setError] =
+    useState('');
 
-    const loadTasks = async () => {
+  // ─── Fetch Tasks ──────────────────────────────────────────────────────────
+  const fetchTasks = useCallback(
+    async (
+      customFilters = filters
+    ) => {
       try {
         setLoading(true);
 
-        const res = await getTasks();
+        const res = await getTasks(
+          customFilters
+        );
 
-        if (!mounted) return;
+        setTasks(
+          res.data.data || []
+        );
 
-        setTasks(res.data.data || []);
-
-        setError("");
+        setError('');
       } catch (err) {
-        if (!mounted) return;
-
-        setError(err.response?.data?.message || "Failed to fetch tasks");
+        setError(
+          err.response?.data
+            ?.message ||
+            'Failed to fetch tasks'
+        );
       } finally {
-        if (mounted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
-    };
+    },
+    [filters]
+  );
+
+  // ─── Load Tasks ───────────────────────────────────────────────────────────
+  useEffect(() => {
+    let mounted = true;
+
+    const loadTasks =
+      async () => {
+        try {
+          setLoading(true);
+
+          const res =
+            await getTasks(
+              filters
+            );
+
+          if (!mounted) {
+            return;
+          }
+
+          setTasks(
+            res.data.data || []
+          );
+
+          setError('');
+        } catch (err) {
+          if (!mounted) {
+            return;
+          }
+
+          setError(
+            err.response?.data
+              ?.message ||
+              'Failed to fetch tasks'
+          );
+        } finally {
+          if (mounted) {
+            setLoading(false);
+          }
+        }
+      };
 
     loadTasks();
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [filters]);
 
-  const fetchTasks = async () => {
-    try {
-      setLoading(true);
-
-      const res = await getTasks();
-
-      setTasks(res.data.data || []);
-
-      setError("");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch tasks");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addTask = async (taskData) => {
-
+  // ─── Add Task ─────────────────────────────────────────────────────────────
+  const addTask = async (
+    taskData
+  ) => {
     const optimisticTask = {
-
       ...taskData,
 
       task_id:
         crypto.randomUUID(),
 
       completed:
-        taskData.completed ?? false,
+        taskData.completed ??
+        false,
 
+      created_at:
+        new Date().toISOString(),
     };
 
-    // Optimistic UI
+    // ─── Optimistic Update ──────────────────────────────────────────────────
     setTasks((prev) => [
       optimisticTask,
       ...prev,
     ]);
 
     try {
-
       const res =
-        await createTask(taskData);
+        await createTask(
+          taskData
+        );
 
       const savedTask =
+        res.data.task ||
         res.data.data;
 
       setTasks((prev) =>
         prev.map((task) =>
-
           task.task_id ===
           optimisticTask.task_id
-
             ? savedTask
-
             : task
-
         )
       );
 
-      setError("");
-
+      setError('');
     } catch (err) {
-
-      // rollback
+      // ─── Rollback ─────────────────────────────────────────────────────────
       setTasks((prev) =>
         prev.filter(
           (task) =>
-
             task.task_id !==
             optimisticTask.task_id
         )
       );
 
       setError(
-        err.response?.data?.message ||
-        "Create failed"
+        err.response?.data
+          ?.message ||
+          'Create failed'
       );
-
     }
-
   };
 
-  const updateTaskData = async (taskId, data) => {
-    const previousTasks = [...tasks];
+  // ─── Update Task ──────────────────────────────────────────────────────────
+  const updateTaskData =
+    async (taskId, data) => {
+      const previousTasks = [
+        ...tasks,
+      ];
 
+      // ─── Optimistic Update ───────────────────────────────────────────────
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.task_id ===
+          taskId
+            ? {
+                ...task,
+                ...data,
+              }
+            : task
+        )
+      );
+
+      try {
+        await updateTask(
+          taskId,
+          data
+        );
+
+        setError('');
+      } catch (err) {
+        // ─── Rollback ──────────────────────────────────────────────────────
+        setTasks(
+          previousTasks
+        );
+
+        setError(
+          err.response?.data
+            ?.message ||
+            'Update failed'
+        );
+      }
+    };
+
+  // ─── Remove Task ──────────────────────────────────────────────────────────
+  const removeTask = async (
+    taskId
+  ) => {
+    const previousTasks = [
+      ...tasks,
+    ];
+
+    // ─── Optimistic Update ────────────────────────────────────────────────
     setTasks((prev) =>
-      prev.map((task) =>
-        task.task_id === taskId ? { ...task, ...data } : task,
-      ),
+      prev.filter(
+        (task) =>
+          task.task_id !==
+          taskId
+      )
     );
 
     try {
-      await updateTask(taskId, data);
+      await deleteTask(
+        taskId
+      );
 
-      setError("");
+      setError('');
     } catch (err) {
-      setTasks(previousTasks);
+      // ─── Rollback ───────────────────────────────────────────────────────
+      setTasks(
+        previousTasks
+      );
 
-      setError(err.response?.data?.message || "Update failed");
+      setError(
+        err.response?.data
+          ?.message ||
+          'Delete failed'
+      );
     }
   };
 
-  const removeTask = async (taskId) => {
-    const previousTasks = [...tasks];
-
-    setTasks((prev) => prev.filter((task) => task.task_id !== taskId));
-
-    try {
-      await deleteTask(taskId);
-
-      setError("");
-    } catch (err) {
-      setTasks(previousTasks);
-
-      setError(err.response?.data?.message || "Delete failed");
-    }
-  };
-
-  const toggleTask = async (task) => {
+  // ─── Toggle Task ──────────────────────────────────────────────────────────
+  const toggleTask = async (
+    task
+  ) => {
     const updatedTask = {
-      completed: !task.completed,
-      completed_at: !task.completed ? new Date().toISOString() : null,
+      completed:
+        !task.completed,
+
+      completed_at:
+        !task.completed
+          ? new Date().toISOString()
+          : null,
     };
 
-    const previousTasks = [...tasks];
+    const previousTasks = [
+      ...tasks,
+    ];
 
+    // ─── Optimistic Update ────────────────────────────────────────────────
     setTasks((prev) =>
       prev.map((item) =>
-        item.task_id === task.task_id
+        item.task_id ===
+        task.task_id
           ? {
               ...item,
               ...updatedTask,
             }
-          : item,
-      ),
+          : item
+      )
     );
 
     try {
-      await updateTask(task.task_id, updatedTask);
+      await updateTask(
+        task.task_id,
+        updatedTask
+      );
 
-      setError("");
+      setError('');
     } catch (err) {
-      setTasks(previousTasks);
+      // ─── Rollback ───────────────────────────────────────────────────────
+      setTasks(
+        previousTasks
+      );
 
-      setError(err.response?.data?.message || "Toggle failed");
+      setError(
+        err.response?.data
+          ?.message ||
+          'Toggle failed'
+      );
     }
   };
 
+  // ─── Return ───────────────────────────────────────────────────────────────
   return {
     tasks,
+
     loading,
+
     error,
 
     fetchTasks,

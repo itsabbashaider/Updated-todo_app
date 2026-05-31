@@ -1,123 +1,151 @@
-import { useState } from 'react';
+import {
+  useState,
+  useMemo,
+} from 'react';
 
 import Sidebar from '../components/layouts/sidebar.component';
-
 import { useTasks } from '../hooks/use-task.hook';
-import '../styles/tasks.css';
-
 import CreateModal from '../components/modals/create-tasks-modal.component';
 import EditModal from '../components/modals/edit-tasks-modal.component';
 import TaskDetailModal from '../components/modals/task-details-modal.component';
 import ConfirmModal from '../components/modals/confirmation-modal.component';
 
+import {
+  FaCheck,
+  FaUndo,
+  FaEdit,
+  FaTrash,
+  FaPlus,
+} from 'react-icons/fa';
+
+import '../styles/tasks.css';
+
+// ============================================================================
+// TASKS PAGE COMPONENT
+// ============================================================================
+
 function TasksPage() {
-  const {
-    tasks,
-    addTask,
-    removeTask,
-    toggleTask,
-    updateTaskData,
-  } = useTasks();
+  // =========================
+  // STATE - SEARCH
+  // =========================
 
   const [search, setSearch] = useState('');
+
+  // =========================
+  // STATE - MODALS
+  // =========================
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [detailTask, setDetailTask] = useState(null);
-
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
 
   // =========================
-  // FILTER TASKS
+  // FILTERS
   // =========================
 
-  const filteredTasks = tasks.filter((task) =>
-    task.title
-      ?.toLowerCase()
-      .includes(search.toLowerCase())
+  const filters = useMemo(
+    () => ({
+      search,
+    }),
+    [search]
   );
 
   // =========================
-  // PRIORITY ORDER
+  // TASKS HOOK
+  // =========================
+
+  const {
+    tasks,
+    loading,
+    error,
+    addTask,
+    removeTask,
+    toggleTask,
+    updateTaskData,
+  } = useTasks(filters);
+
+  // =========================
+  // HELPER - PRIORITY VALUE
   // =========================
 
   const getPriorityValue = (priority) => {
     const value = String(priority).toLowerCase();
 
-    // HIGH
     if (value === 'high') {
       return 1;
     }
 
-    // MID / MEDIUM
-    if (
-      value === 'mid' ||
-      value === 'medium'
-    ) {
+    if (value === 'mid' || value === 'medium') {
       return 2;
     }
 
-    // LOW
     if (value === 'low') {
       return 3;
     }
 
-    // UNKNOWN
     return 99;
   };
 
   // =========================
-  // PENDING TASKS
+  // COMPUTED - PENDING TASKS
   // =========================
 
-  const pendingTasks = [...filteredTasks]
-    .filter((task) => !task.completed)
-    .sort((a, b) => {
-      return (
-        getPriorityValue(a.priority) -
-        getPriorityValue(b.priority)
-      );
-    });
+  const pendingTasks = useMemo(() => {
+    return [...tasks]
+      .filter((task) => !task.completed)
+      .sort((a, b) => {
+        return (
+          getPriorityValue(a.priority) -
+          getPriorityValue(b.priority)
+        );
+      });
+  }, [tasks]);
 
   // =========================
-  // COMPLETED TASKS
+  // COMPUTED - COMPLETED TASKS
   // =========================
 
-  const completedTasks = [...filteredTasks]
-    .filter((task) => task.completed)
-    .sort((a, b) => {
-      // PRIORITY FIRST
-      const priorityCompare =
-        getPriorityValue(a.priority) -
-        getPriorityValue(b.priority);
+  const completedTasks = useMemo(() => {
+    return [...tasks]
+      .filter((task) => task.completed)
+      .sort((a, b) => {
+        const priorityCompare =
+          getPriorityValue(a.priority) -
+          getPriorityValue(b.priority);
 
-      if (priorityCompare !== 0) {
-        return priorityCompare;
-      }
+        if (priorityCompare !== 0) {
+          return priorityCompare;
+        }
 
-      // NEWEST COMPLETED FIRST
-      const dateA = new Date(
-        a.updated_at ||
-          a.updatedAt ||
-          a.completed_at ||
-          a.created_at ||
-          0
-      );
+        const dateA = new Date(
+          a.updated_at ||
+            a.updatedAt ||
+            a.completed_at ||
+            a.completedAt ||
+            a.created_at ||
+            a.createdAt ||
+            0
+        );
 
-      const dateB = new Date(
-        b.updated_at ||
-          b.updatedAt ||
-          b.completed_at ||
-          b.created_at ||
-          0
-      );
+        const dateB = new Date(
+          b.updated_at ||
+            b.updatedAt ||
+            b.completed_at ||
+            b.completedAt ||
+            b.created_at ||
+            b.createdAt ||
+            0
+        );
 
-      return dateB - dateA;
-    });
+        return dateB - dateA;
+      });
+  }, [tasks]);
 
   // =========================
-  // CREATE TASK
+  // HANDLER - CREATE TASK
   // =========================
 
   const handleCreateTask = async (taskData) => {
@@ -125,21 +153,21 @@ function TasksPage() {
       ...taskData,
       completed: false,
     });
+
+    setIsCreateOpen(false);
   };
 
   // =========================
-  // UPDATE TASK
+  // HANDLER - UPDATE TASK
   // =========================
 
-  const handleUpdateTask = async (
-    taskId,
-    updates
-  ) => {
+  const handleUpdateTask = async (taskId, updates) => {
     await updateTaskData(taskId, updates);
+    setEditingTask(null);
   };
 
   // =========================
-  // CONFIRM MODAL
+  // HANDLER - CONFIRMATION
   // =========================
 
   const askConfirm = (message, action) => {
@@ -155,90 +183,65 @@ function TasksPage() {
   };
 
   const handleConfirm = async () => {
-    if (!confirmAction) return;
+    if (!confirmAction) {
+      return;
+    }
 
     await confirmAction();
     closeConfirm();
   };
 
   // =========================
-  // TOGGLE TASK
+  // HANDLER - TOGGLE TASK
   // =========================
 
-// =========================
-// TOGGLE TASK
-// =========================
-
-  const onToggle = (task) => {
-
+  const onToggle = async (task) => {
     const today = new Date();
-
-    today.setHours(
-      0,
-      0,
-      0,
-      0
-    );
+    today.setHours(0, 0, 0, 0);
 
     const taskDate = new Date(
-
       task.created_at ||
-
-      task.createdAt ||
-
-      task.updated_at ||
-
-      task.updatedAt ||
-
-      new Date()
-
+        task.createdAt ||
+        task.updated_at ||
+        task.updatedAt ||
+        new Date()
     );
-
-    taskDate.setHours(
-      0,
-      0,
-      0,
-      0
-    );
+    taskDate.setHours(0, 0, 0, 0);
 
     // UNDO COMPLETED TASK
-
     if (task.completed) {
-
       askConfirm(
         'Are you sure you want to undo this completed task?',
-        () => toggleTask(task)
+        async () => {
+          await toggleTask(task);
+        }
       );
-
       return;
-
     }
 
-    // FUTURE TASK CONFIRMATION
-
+    // FUTURE TASK WARNING
     if (taskDate > today) {
-
       askConfirm(
         'This task is scheduled for a future date. Mark it as completed anyway?',
-        () => toggleTask(task)
+        async () => {
+          await toggleTask(task);
+        }
       );
-
       return;
-
     }
 
     // NORMAL COMPLETE
-
-    toggleTask(task);
-
+    await toggleTask(task);
   };
 
   // =========================
-  // EDIT TASK
+  // HANDLER - EDIT TASK
   // =========================
 
   const onEdit = (task) => {
-    if (!task || task.completed) return;
+    if (!task || task.completed) {
+      return;
+    }
 
     setEditingTask(task);
   };
@@ -248,18 +251,20 @@ function TasksPage() {
   };
 
   // =========================
-  // DELETE TASK
+  // HANDLER - DELETE TASK
   // =========================
 
   const onDelete = (task) => {
     askConfirm(
       'Are you sure you want to delete this task?',
-      () => removeTask(task.task_id)
+      async () => {
+        await removeTask(task.task_id);
+      }
     );
   };
 
   // =========================
-  // TASK DETAILS
+  // HANDLER - VIEW DETAIL
   // =========================
 
   const onViewDetail = (task) => {
@@ -271,92 +276,130 @@ function TasksPage() {
   };
 
   // =========================
-  // TASK CARD
+  // RENDER - TASK CARD
   // =========================
 
   const renderTaskCard = (task) => (
     <div
       className="modern-task-card"
-      key={task.task_id}
+      key={task.task_id || task.id}
       onClick={() => onViewDetail(task)}
     >
       <div className="task-card-top">
-        <h3
-          className={
-            task.completed ? 'completed' : ''
-          }
-        >
+        <h3 className={task.completed ? 'completed' : ''}>
           {task.title}
         </h3>
 
         <span
           className={`priority ${String(
-            task.priority
+            task.priority || 'low'
           ).toLowerCase()}`}
         >
-          {task.priority}
+          {task.priority || 'Low'}
         </span>
       </div>
 
       <div className="task-card-body">
-        <p
-          className={
-            task.completed ? 'completed' : ''
-          }
-        >
-          {task.description ||
-            'No description available.'}
+        <p className={task.completed ? 'completed' : ''}>
+          {task.description || 'No description available.'}
         </p>
 
         <small className="task-date">
           Created:{' '}
-          {new Date(
-            task.created_at || task.createdAt
-          ).toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          })}
+          {task.created_at || task.createdAt
+            ? new Date(
+                task.created_at || task.createdAt
+              ).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : 'No date'}
         </small>
       </div>
 
       <div className="task-card-bottom">
+        {/* COMPLETE */}
         <button
           className="btn complete-btn"
+          type="button"
+          title={task.completed ? 'Undo' : 'Complete'}
           onClick={(e) => {
             e.stopPropagation();
             onToggle(task);
           }}
         >
-          {task.completed ? '↩' : '✓'}
+          {task.completed ? <FaUndo /> : <FaCheck />}
         </button>
 
+        {/* EDIT */}
         <button
           className="btn edit-btn"
+          type="button"
+          title="Edit Task"
           onClick={(e) => {
             e.stopPropagation();
             onEdit(task);
           }}
           disabled={task.completed}
         >
-          ✎
+          <FaEdit />
         </button>
 
+        {/* DELETE */}
         <button
-          className="delete-btn"
+          className="btn delete-btn"
+          type="button"
+          title="Delete Task"
           onClick={(e) => {
             e.stopPropagation();
             onDelete(task);
           }}
         >
-          ✕
+          <FaTrash />
         </button>
       </div>
     </div>
   );
 
   // =========================
-  // UI
+  // RENDER - LOADING
+  // =========================
+
+  if (loading) {
+    return (
+      <div className="tasks-layout">
+        <Sidebar />
+
+        <main className="tasks-main">
+          <div className="tasks-container">
+            <p>Loading tasks...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // =========================
+  // RENDER - ERROR
+  // =========================
+
+  if (error) {
+    return (
+      <div className="tasks-layout">
+        <Sidebar />
+
+        <main className="tasks-main">
+          <div className="tasks-container">
+            <p>{error}</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // =========================
+  // RENDER - MAIN UI
   // =========================
 
   return (
@@ -364,117 +407,119 @@ function TasksPage() {
       <Sidebar />
 
       <main className="tasks-main">
-        <div className="tasks-header">
-          <div>
-            <h1>Tasks</h1>
+          {/* HEADER */}
 
-            <p>
-              Manage your productivity
-              workflow.
-            </p>
+          <div className="tasks-header">
+            
+            <div className="header-content">
+              <h1>Tasks</h1>
+
+              <p>Manage your productivity workflow.</p>
+              <div className="tasks-controls">
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                  }}
+                  className="search-input"
+                />
+
+                <button
+                  className="btn primary"
+                  type="button"
+                  onClick={() => setIsCreateOpen(true)}
+                >
+                  <>
+                    <FaPlus />
+                    <span>New Task</span>
+                  </>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        <div className="tasks-container">
 
-        <div className="tasks-controls">
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
+
+          {/* BOARD */}
+
+          <div className="kanban-board">
+            {/* PENDING */}
+
+            <div className="kanban-column">
+              <div className="kanban-header">
+                <h3>Pending</h3>
+
+                <span>{pendingTasks.length}</span>
+              </div>
+
+              <div className="kanban-tasks">
+                {pendingTasks.length > 0 ? (
+                  pendingTasks.map((task) => renderTaskCard(task))
+                ) : (
+                  <div className="empty-state">
+                    <p>No pending tasks.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* COMPLETED */}
+
+            <div className="kanban-column">
+              <div className="kanban-header">
+                <h3>Completed</h3>
+
+                <span>{completedTasks.length}</span>
+              </div>
+
+              <div className="kanban-tasks">
+                {completedTasks.length > 0 ? (
+                  completedTasks.map((task) => renderTaskCard(task))
+                ) : (
+                  <div className="empty-state">
+                    <p>No completed tasks.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* CREATE MODAL */}
+
+          <CreateModal
+            isOpen={isCreateOpen}
+            onClose={() => setIsCreateOpen(false)}
+            onCreate={handleCreateTask}
           />
 
-          <button
-            className="btn primary"
-            type="button"
-            onClick={() =>
-              setIsCreateOpen(true)
-            }
-          >
-            New Task
-          </button>
+          {/* EDIT MODAL */}
+
+          <EditModal
+            isOpen={Boolean(editingTask)}
+            onClose={closeEditModal}
+            task={editingTask}
+            onUpdate={handleUpdateTask}
+          />
+
+          {/* DETAIL MODAL */}
+
+          <TaskDetailModal
+            isOpen={Boolean(detailTask)}
+            onClose={closeDetailModal}
+            task={detailTask}
+          />
+
+          {/* CONFIRM MODAL */}
+
+          <ConfirmModal
+            isOpen={confirmOpen}
+            message={confirmMessage}
+            onClose={closeConfirm}
+            onConfirm={handleConfirm}
+          />
         </div>
-
-        <div className="kanban-board">
-          {/* PENDING */}
-          <div className="kanban-column">
-            <div className="kanban-header">
-              <h3>Pending</h3>
-
-              <span>
-                {pendingTasks.length}
-              </span>
-            </div>
-
-            <div className="kanban-tasks">
-              {pendingTasks.length > 0 ? (
-                pendingTasks.map((task) =>
-                  renderTaskCard(task)
-                )
-              ) : (
-                <div className="empty-state">
-                  <p>No pending tasks.</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* COMPLETED */}
-          <div className="kanban-column">
-            <div className="kanban-header">
-              <h3>Completed</h3>
-
-              <span>
-                {completedTasks.length}
-              </span>
-            </div>
-
-            <div className="kanban-tasks">
-              {completedTasks.length > 0 ? (
-                completedTasks.map((task) =>
-                  renderTaskCard(task)
-                )
-              ) : (
-                <div className="empty-state">
-                  <p>No completed tasks.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* CREATE */}
-        <CreateModal
-          isOpen={isCreateOpen}
-          onClose={() =>
-            setIsCreateOpen(false)
-          }
-          onCreate={handleCreateTask}
-        />
-
-        {/* EDIT */}
-        <EditModal
-          isOpen={Boolean(editingTask)}
-          onClose={closeEditModal}
-          task={editingTask}
-          onUpdate={handleUpdateTask}
-        />
-
-        {/* DETAILS */}
-        <TaskDetailModal
-          isOpen={Boolean(detailTask)}
-          onClose={closeDetailModal}
-          task={detailTask}
-        />
-
-        {/* CONFIRM */}
-        <ConfirmModal
-          isOpen={confirmOpen}
-          message={confirmMessage}
-          onClose={closeConfirm}
-          onConfirm={handleConfirm}
-        />
       </main>
     </div>
   );

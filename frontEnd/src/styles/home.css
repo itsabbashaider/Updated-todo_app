@@ -1,604 +1,633 @@
+/* =========================================================
+   DASHBOARD PAGE — GitHub Dark (aligned with Analytics)
+========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Mona+Sans:wght@300;400;500;600&display=swap');
+
+/* =========================================================
+   GITHUB DARK TOKENS (mirrored from analytics)
+========================================================= */
+
+:root {
+  /* Canvas */
+  --gh-canvas-default:    #0d1117;
+  --gh-canvas-subtle:     #161b22;
+  --gh-canvas-inset:      #010409;
+  --gh-canvas-overlay:    #1c2128;
+
+  /* Border */
+  --gh-border-default:    #30363d;
+  --gh-border-muted:      #21262d;
+  --gh-border-subtle:     rgba(240,246,252,0.1);
+
+  /* Foreground */
+  --gh-fg-default:        #e6edf3;
+  --gh-fg-muted:          #7d8590;
+  --gh-fg-subtle:         #484f58;
+  --gh-fg-onEmphasis:     #ffffff;
+
+  /* Accent (blue) */
+  --gh-accent-fg:         #2f81f7;
+  --gh-accent-emphasis:   #1f6feb;
+  --gh-accent-muted:      rgba(56,139,253,0.4);
+  --gh-accent-subtle:     rgba(56,139,253,0.15);
+
+  /* Success (green) */
+  --gh-success-fg:        #3fb950;
+  --gh-success-emphasis:  #238636;
+  --gh-success-muted:     rgba(46,160,67,0.4);
+  --gh-success-subtle:    rgba(46,160,67,0.15);
+
+  /* Danger (red) */
+  --gh-danger-fg:         #f85149;
+  --gh-danger-subtle:     rgba(248,81,73,0.15);
+  --gh-danger-muted:      rgba(248,81,73,0.4);
+
+  /* Attention (amber) */
+  --gh-attention-fg:      #d29922;
+  --gh-attention-subtle:  rgba(187,128,9,0.15);
+  --gh-attention-muted:   rgba(187,128,9,0.4);
+
+  /* Done (purple) */
+  --gh-done-fg:           #a371f7;
+  --gh-done-subtle:       rgba(163,113,247,0.15);
+
+  /* Neutral */
+  --gh-neutral-emphasis:  #6e7681;
+  --gh-neutral-muted:     rgba(110,118,129,0.4);
+  --gh-neutral-subtle:    rgba(110,118,129,0.1);
+
+  /* Typography */
+  --gh-font: 'Mona Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --gh-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Radius — GitHub uses a tight 6px, not large rounded */
+  --gh-radius-sm: 6px;
+  --gh-radius-md: 6px;
+  --gh-radius-lg: 6px;
+
+  /* Shadow */
+  --gh-shadow-sm: 0 0 transparent;
+  --gh-shadow-md: 0 8px 24px rgba(1,4,9,0.5);
+  --gh-shadow-lg: 0 16px 32px rgba(1,4,9,0.6);
+
+  --gh-transition: 80ms ease;
+}
+
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+
+.dashboard-layout *,
+.dashboard-layout *::before,
+.dashboard-layout *::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* =========================================================
+   LAYOUT
+========================================================= */
+
 .dashboard-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--page-bg);
+  overflow-x: hidden;
+  background: var(--gh-canvas-default);
+  font-family: var(--gh-font);
+  color: var(--gh-fg-default);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 .dashboard-main {
   flex: 1;
-  padding: 28px;
-  color: var(--text);
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 24px 32px;
+  background: var(--gh-canvas-default);
 }
 
-/* ==========================================
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.dashboard-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* =========================================================
    HEADER
-========================================== */
+========================================================= */
 
 .dashboard-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-bottom: 28px;
+  gap: 16px;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--gh-border-default);
+}
+
+.dashboard-header > div {
+  min-width: 0;
 }
 
 .dashboard-header h1 {
   margin: 0;
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--text);
+  color: var(--gh-fg-default);
+  font-family: var(--gh-font);
+  font-size: 2.0rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
 }
 
 .dashboard-header p {
-  margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 0.95rem;
+  margin: 2px 0 0;
+  color: var(--gh-fg-muted);
+  font-size: 13px;
+  font-weight: 400;
 }
 
-/* ==========================================
-   BUTTON
-========================================== */
+/* =========================================================
+   ADD TASK BUTTON
+========================================================= */
 
 .add-task-btn {
-  padding: 12px 18px;
-  border: 1px solid transparent;
-  border-radius: 14px;
-  background: var(--primary);
-  color: var(--primary-contrast);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: var(--gh-accent-emphasis);
+  border: 1px solid rgba(240,246,252,0.1);
+  border-radius: var(--gh-radius-md);
+  color: var(--gh-fg-onEmphasis);
+  font-family: var(--gh-font);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 700;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+  white-space: nowrap;
+  transition: background var(--gh-transition), box-shadow var(--gh-transition);
 }
 
 .add-task-btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
+  background: #388bfd;
+  box-shadow: 0 0 0 3px var(--gh-accent-muted);
 }
 
-/* ==========================================
+/* =========================================================
    STATS GRID
-========================================== */
+========================================================= */
 
 .stats-grid {
   display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  margin-bottom: 28px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
-/* ==========================================
+/* =========================================================
    STAT CARD
-========================================== */
+========================================================= */
 
 .stat-card {
   position: relative;
+  padding: 16px;
+  background: var(--gh-canvas-subtle);
+  border: 1px solid var(--gh-border-default);
+  border-radius: var(--gh-radius-md);
   overflow: hidden;
-
-  padding: 24px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.02),
-      rgba(255, 255, 255, 0)
-    ),
-    var(--surface);
-
-  border: 1px solid var(--border);
-
-  border-radius: 22px;
-
-  box-shadow: var(--shadow-soft);
-
-  transition:
-    transform 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.stat-card::before {
-  content: '';
-
-  position: absolute;
-  inset: 0 auto auto 0;
-
-  width: 100%;
-  height: 4px;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--primary),
-      var(--accent)
-    );
-
-  opacity: 0;
-
-  transition: opacity 0.25s ease;
+  transition: border-color var(--gh-transition);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-
-  border-color: var(--primary);
-
-  box-shadow: var(--shadow);
+  border-color: var(--gh-accent-emphasis);
 }
 
-.stat-card:hover::before {
-  opacity: 1;
+/* Remove old ::before gradient bar — analytics cards don't use it */
+.stat-card::before {
+  display: none;
 }
-
-.stat-card h2 {
-  margin: 16px 0 10px;
-
-  font-size: 1.65rem;
-  font-weight: 800;
-  line-height: 1.2;
-
-  letter-spacing: -0.03em;
-
-  color: var(--text);
-}
-
-.stat-card p {
-  margin: 0;
-
-  color: var(--text-muted);
-
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-/* ==========================================
-   STAT ICON
-========================================== */
 
 .stat-top {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 56px;
-  height: 56px;
-
-  border-radius: 18px;
-
-  background: var(--surface-soft);
-
-  border: 1px solid var(--border);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--gh-radius-sm);
+  background: var(--gh-neutral-subtle);
+  border: 1px solid var(--gh-border-default);
+  margin-bottom: 8px;
 }
 
 .stat-icon {
-  font-size: 1.4rem;
+  font-size: 14px;
+  line-height: 1;
 }
 
-/* ==========================================
-   CONTENT LAYOUT
-========================================== */
+.stat-card h2 {
+  margin: 0 0 0;
+  color: var(--gh-fg-default);
+  font-family: var(--gh-mono);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+
+.stat-card p {
+  margin: 4px 0 0;
+  color: var(--gh-fg-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   MAIN CONTENT GRID
+========================================================= */
 
 .dashboard-content {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
 }
 
-/* ==========================================
-   PANELS
-========================================== */
+/* =========================================================
+   PANELS (tasks + calendar)
+========================================================= */
 
 .tasks-section,
 .calendar-preview {
-  background: var(--surface);
-
-  border: 1px solid var(--border);
-
-  border-radius: 24px;
-
-  padding: 24px;
-
-  box-shadow: var(--shadow-soft);
+  min-width: 0;
+  padding: 16px;
+  background: var(--gh-canvas-subtle);
+  border: 1px solid var(--gh-border-default);
+  border-radius: var(--gh-radius-md);
+  transition: border-color var(--gh-transition);
 }
 
-/* ==========================================
+.calendar-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tasks-section:hover,
+.calendar-preview:hover {
+  border-color: var(--gh-border-muted);
+}
+
+/* =========================================================
    SECTION HEADER
-========================================== */
+========================================================= */
 
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-
-  margin-bottom: 20px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--gh-border-muted);
 }
 
 .section-header h3 {
   margin: 0;
-
-  color: var(--text);
-
-  font-size: 1.1rem;
-  font-weight: 700;
+  color: var(--gh-fg-default);
+  font-family: var(--gh-font);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
-/* ==========================================
+/* =========================================================
    TASKS LIST
-========================================== */
+========================================================= */
 
 .tasks-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+  margin-top: 4px;
+  padding-right: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
-/* ==========================================
+/* =========================================================
+   CUSTOM SCROLLBAR
+========================================================= */
+
+.tasks-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tasks-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tasks-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: var(--gh-border-default);
+  background-clip: padding-box;
+  transition: background 150ms ease;
+}
+
+.tasks-list::-webkit-scrollbar-thumb:hover {
+  background: var(--gh-neutral-emphasis);
+  background-clip: padding-box;
+}
+
+/* =========================================================
    TASK CARD
-========================================== */
+========================================================= */
 
 .task-card {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
-
-  padding: 18px;
-
-  background: var(--surface-soft);
-
-  border: 1px solid transparent;
-
-  border-radius: 18px;
-
-  transition:
-    border-color 0.2s ease,
-    transform 0.2s ease,
-    background 0.2s ease;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--gh-border-muted);
+  border-radius: var(--gh-radius-md);
+  background: var(--gh-canvas-default);
+  transition: border-color var(--gh-transition), background var(--gh-transition);
 }
 
 .task-card:hover {
-  transform: translateY(-2px);
-
-  border-color: var(--border-strong);
-
-  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--gh-border-default);
+  background: var(--gh-canvas-overlay);
 }
 
 .task-card > div {
   width: 100%;
+  min-width: 0;
 }
 
 .task-card h4 {
-  margin: 0 0 8px;
-
-  color: var(--text);
-
-  font-size: 1rem;
-  font-weight: 700;
+  margin: 0 0 4px;
+  color: var(--gh-fg-default);
+  font-family: var(--gh-font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .task-card p {
   margin: 0;
-
-  color: var(--text-muted);
-
+  color: var(--gh-fg-muted);
+  font-size: 12px;
   line-height: 1.5;
-
-  font-size: 0.92rem;
+  word-break: break-word;
 }
-
-/* ==========================================
-   TASK DATE
-========================================== */
 
 .task-date {
   display: block;
-
-  margin-top: 12px;
-
-  font-size: 12px;
-
-  color: var(--text-soft);
-
-  text-align: right;
+  margin-top: 8px;
+  color: var(--gh-fg-subtle);
+  font-family: var(--gh-mono);
+  font-size: 11px;
 }
 
-/* ==========================================
+/* =========================================================
    PRIORITY BADGE
-========================================== */
+========================================================= */
 
 .priority-badge {
+  flex-shrink: 0;
   align-self: flex-start;
-
-  padding: 8px 12px;
-
+  padding: 2px 8px;
   border-radius: 999px;
-
-  font-size: 0.75rem;
-  font-weight: 700;
-
-  border: 1px solid transparent;
-
   white-space: nowrap;
-
+  font-family: var(--gh-font);
+  font-size: 11px;
+  font-weight: 500;
   text-transform: capitalize;
+  border: 1px solid transparent;
 }
 
 .priority-badge.high {
-  color: var(--danger-text);
-
-  background: var(--danger-bg);
-
-  border-color: var(--danger-border);
+  color: var(--gh-danger-fg);
+  background: var(--gh-danger-subtle);
+  border-color: var(--gh-danger-muted);
 }
 
 .priority-badge.medium {
-  color: var(--warning-text);
-
-  background: var(--warning-bg);
-
-  border-color: var(--warning-border);
+  color: var(--gh-attention-fg);
+  background: var(--gh-attention-subtle);
+  border-color: var(--gh-attention-muted);
 }
 
 .priority-badge.low {
-  color: var(--success-text);
-
-  background: var(--success-bg);
-
-  border-color: var(--success-border);
+  color: var(--gh-success-fg);
+  background: var(--gh-success-subtle);
+  border-color: var(--gh-success-muted);
 }
 
-/* ==========================================
-   CALENDAR / INSIGHTS PANEL
-========================================== */
+/* =========================================================
+   CALENDAR / SUMMARY CARD
+========================================================= */
 
 .calendar-card {
-  background: var(--surface-soft);
-
-  border: 1px solid var(--border);
-
-  border-radius: 20px;
-
-  padding: 24px;
+  padding: 12px;
+  border: 1px solid var(--gh-border-muted);
+  border-radius: var(--gh-radius-md);
+  background: var(--gh-canvas-default);
 }
 
 .calendar-card h2 {
-  margin: 0 0 18px;
-
-  color: var(--text);
-
-  font-size: 1.2rem;
+  margin: 0 0 12px;
+  color: var(--gh-fg-default);
+  font-family: var(--gh-font);
+  font-size: 13px;
+  font-weight: 600;
 }
 
-/* ==========================================
+/* =========================================================
    SUMMARY GRID
-========================================== */
+========================================================= */
 
 .summary-box {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(140px, 1fr));
-
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding-bottom: 15px;
 }
 
+/* =========================================================
+   SUMMARY ITEM
+========================================================= */
+
 .summary-item {
-  padding: 18px;
-
-  background: var(--surface);
-
-  border: 1px solid var(--border);
-
-  border-radius: 18px;
-
+  padding: 12px;
   text-align: center;
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  border: 1px solid var(--gh-border-muted);
+  border-radius: var(--gh-radius-md);
+  background: var(--gh-canvas-subtle);
+  transition: border-color var(--gh-transition);
 }
 
 .summary-item:hover {
-  transform: translateY(-2px);
-
-  border-color: var(--primary);
+  border-color: var(--gh-accent-emphasis);
 }
 
 .summary-item span {
   display: block;
-
-  color: var(--text-muted);
-
-  margin-bottom: 8px;
-
-  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: var(--gh-fg-muted);
+  font-size: 11px;
+  font-weight: 500;
 }
 
 .summary-item strong {
   display: block;
-
-  font-size: 1.5rem;
-  font-weight: 800;
-
-  letter-spacing: -0.03em;
-
-  color: var(--text);
+  color: var(--gh-fg-default);
+  font-family: var(--gh-mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
 }
 
-/* ==========================================
-   QUICK INSIGHTS PANEL
-========================================== */
+/* =========================================================
+   INSIGHTS GRID
+========================================================= */
 
 .insights-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
-
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
+/* =========================================================
+   INSIGHT CARD
+========================================================= */
+
 .insight-card {
-  position: relative;
-
-  overflow: hidden;
-
-  padding: 22px;
-
-  border-radius: 22px;
-
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.02),
-      rgba(255, 255, 255, 0)
-    ),
-    var(--surface-soft);
-
-  border: 1px solid var(--border);
-
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--gh-canvas-subtle);
+  border: 1px solid var(--gh-border-default);
+  border-radius: var(--gh-radius-md);
+  transition: border-color var(--gh-transition);
 }
 
 .insight-card:hover {
-  transform: translateY(-3px);
-
-  border-color: var(--border-strong);
-
-  box-shadow: var(--shadow-soft);
+  border-color: var(--gh-accent-emphasis);
 }
 
+/* Remove old ::before gradient bar */
 .insight-card::before {
-  content: '';
-
-  position: absolute;
-  inset: 0 auto auto 0;
-
-  width: 100%;
-  height: 4px;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--primary),
-      var(--accent)
-    );
-
-  opacity: 0;
-
-  transition: opacity 0.2s ease;
-}
-
-.insight-card:hover::before {
-  opacity: 1;
+  display: none;
 }
 
 .insight-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 60px;
-  height: 60px;
-
-  border-radius: 18px;
-
-  background: var(--surface);
-
-  border: 1px solid var(--border);
-
-  font-size: 1.5rem;
-
-  margin-bottom: 18px;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--gh-accent-fg);
+  background: var(--gh-accent-subtle);
+  border: 1px solid var(--gh-accent-muted);
+  border-radius: var(--gh-radius-sm);
+  font-size: 14px;
 }
 
 .insight-card h3 {
-  margin: 0 0 10px;
-
-  color: var(--text);
-
-  font-size: 1.1rem;
-  font-weight: 800;
+  margin: 0 0 3px;
+  color: var(--gh-fg-default);
+  font-family: var(--gh-font);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .insight-card p {
   margin: 0;
-
-  color: var(--text-muted);
-
-  line-height: 1.6;
-
-  font-size: 0.92rem;
+  color: var(--gh-fg-muted);
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 400;
 }
 
-/* ==========================================
+/* =========================================================
    PRODUCTIVITY BAR
-========================================== */
+========================================================= */
 
 .productivity-bar {
-  margin-top: 18px;
-
   width: 100%;
-  height: 12px;
-
+  height: 6px;
+  margin-top: 12px;
   overflow: hidden;
-
-  border-radius: 999px;
-
-  background: var(--surface);
-
-  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--gh-neutral-muted);
+  border: none;
 }
 
 .productivity-fill {
   height: 100%;
-
-  border-radius: inherit;
-
-  background:
-    linear-gradient(
-      90deg,
-      var(--primary),
-      var(--accent)
-    );
-
+  border-radius: 3px;
+  background: var(--gh-success-emphasis);
   transition: width 0.4s ease;
 }
 
-/* ==========================================
-   STREAK CARD
-========================================== */
+/* =========================================================
+   STREAK
+========================================================= */
 
 .streak-value {
-  margin-top: 14px;
-
-  font-size: 2rem;
-  font-weight: 800;
-
-  letter-spacing: -0.03em;
-
-  color: var(--text);
+  margin-top: 8px;
+  color: var(--gh-attention-fg);
+  font-family: var(--gh-mono);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
 }
 
 .streak-label {
-  margin-top: 6px;
-
-  color: var(--text-muted);
-
-  font-size: 0.9rem;
+  margin-top: 4px;
+  color: var(--gh-fg-subtle);
+  font-size: 11px;
+  font-weight: 400;
 }
 
-/* ==========================================
-   RESPONSIVE
-========================================== */
+/* =========================================================
+   RESPONSIVE — LARGE
+========================================================= */
+
+@media (max-width: 1400px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
 
 @media (max-width: 1000px) {
   .dashboard-content {
@@ -606,64 +635,78 @@
   }
 }
 
-@media (max-width: 768px) {
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
   .dashboard-main {
-    padding: 20px;
+    padding: 20px 16px;
   }
 
-  .dashboard-header h1 {
-    font-size: 1.7rem;
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .stats-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .insights-grid {
     grid-template-columns: 1fr;
   }
-
-  .insight-card {
-    padding: 18px;
-  }
 }
+
+/* =========================================================
+   RESPONSIVE — SMALL MOBILE
+========================================================= */
 
 @media (max-width: 600px) {
   .dashboard-main {
-    padding: 16px;
-  }
-
-  .dashboard-header {
-    gap: 12px;
+    padding: 16px 12px;
   }
 
   .dashboard-header h1 {
-    font-size: 1.45rem;
-  }
-
-  .stats-grid,
-  .dashboard-content {
-    gap: 16px;
+    font-size: 16px;
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
-  .stat-card {
-    padding: 18px;
+  .stat-card,
+  .tasks-section,
+  .calendar-preview,
+  .insight-card {
+    padding: 12px;
   }
 
   .task-card {
     flex-direction: column;
-    gap: 14px;
   }
 
   .priority-badge {
     align-self: flex-start;
   }
 
-  .stat-card h2 {
-    font-size: 1.4rem;
+  .add-task-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

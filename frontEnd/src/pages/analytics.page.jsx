@@ -1,7 +1,12 @@
-import { useState, useMemo } from 'react';
+// ─── Dependencies ─────────────────────────────────────────────────────────────
+import { useState } from 'react';
+
 import Sidebar from '../components/layouts/sidebar.component';
+
 import '../styles/analytics.css';
-import { useTasks } from '../hooks/use-task.hook';
+
+import { useAnalytics } from '../hooks/use-analytics.hook';
+
 import {
   ResponsiveContainer,
   PieChart,
@@ -18,228 +23,159 @@ import {
   Legend,
 } from 'recharts';
 
+import {
+  Flame,
+  CheckCircle2,
+  Clock3,
+  Target,
+  TrendingUp,
+  TrendingDown,
+  Rocket,
+  AlertTriangle,
+  ShieldCheck,
+  ShieldAlert,
+  Scale,
+} from 'lucide-react';
+
+import {
+  FiZap,
+  FiTrendingUp,
+  FiAlertTriangle,
+  FiInfo,
+} from 'react-icons/fi';
+
+const iconMap = {
+  zap: FiZap,
+  'trending-up': FiTrendingUp,
+  'alert-triangle': FiAlertTriangle,
+  info: FiInfo,
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
 function AnalyticsPage() {
-  const { tasks } = useTasks();
-  const [dateRange, setDateRange] = useState(7); // 7, 14, or 30 days
+  const [dateRange, setDateRange] = useState(7);
 
-  // ==========================================
-  // CALCULATE BASIC METRICS
-  // ==========================================
+  // Main analytics — changes with date selector
+  const {
+    analytics,
+    loading,
+    error,
+  } = useAnalytics(dateRange);
 
-  const completedTasks = tasks.filter((task) => task.completed).length;
-  const pendingTasks = tasks.filter((task) => !task.completed).length;
-  const highPriority = tasks.filter((task) => task.priority?.toLowerCase() === 'high').length;
-  const mediumPriority = tasks.filter((task) => task.priority?.toLowerCase() === 'medium').length;
-  const lowPriority = tasks.filter((task) => task.priority?.toLowerCase() === 'low').length;
+  // Timeline analytics — always fixed at 10 days, unaffected by selector
+  const { analytics: timelineAnalytics } = useAnalytics(10);
 
-  const productivity = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+  // ─── Loading ───────────────────────────────────────────────────────────────
+  if (loading || !analytics) {
+    return (
+      <div className="analytics-layout">
+        <Sidebar />
+        <main className="analytics-main">
+          <h2>Loading analytics...</h2>
+        </main>
+      </div>
+    );
+  }
 
-  // ==========================================
-  // CALCULATE STREAK
-  // ==========================================
+  // ─── Error ─────────────────────────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="analytics-layout">
+        <Sidebar />
+        <main className="analytics-main">
+          <h2>Failed to load analytics.</h2>
+        </main>
+      </div>
+    );
+  }
 
-  const calculateStreak = useMemo(() => {
-    if (tasks.length === 0) return 0;
+  // ─── Analytics Data ────────────────────────────────────────────────────────
+  const {
+    totalTasks,
+    completedTasks,
+    pendingTasks,
+    productivity,
+    streak,
+    highPriority,
+    priorityData,
+    trendData: chartTrendData,
+    insights,
+    weeklyComparison,
+  } = analytics;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // Timeline always shows 10 days regardless of selector
+  const { trendData: timelineTrendData } = timelineAnalytics || {};
 
-    let streak = 0;
-    let currentDate = new Date(today);
+  // ─── Balanced Workload Momentum Logic ──────────────────────────────────────
+  const baselineScore = (pendingTasks * 2) + (highPriority * 5);
+  const completionRate = totalTasks > 0 ? completedTasks / totalTasks : 0;
+  const executionMultiplier = 1 - completionRate;
+  let workloadScore = Math.min(Math.round(baselineScore * executionMultiplier), 100);
 
-    while (true) {
-      const dayTasks = tasks.filter((task) => {
-        const taskDate = new Date(task.completed_at || task.completedAt || task.updated_at || task.updatedAt || task.created_at || task.createdAt);
-        taskDate.setHours(0, 0, 0, 0);
-        return taskDate.getTime() === currentDate.getTime() && task.completed;
-      });
+  // ─── Priority Balancing Engine ─────────────────────────────────────────────
+  const highCount  = priorityData.find(p => p.name === 'High')?.value   || 0;
+  const medCount   = priorityData.find(p => p.name === 'Medium')?.value || 0;
+  const lowCount   = priorityData.find(p => p.name === 'Low')?.value    || 0;
 
-      if (dayTasks.length > 0) {
-        streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
+  let balanceMessage = 'Your task distribution across priorities is perfectly balanced.';
+  let balancePenalty = 0;
+  let dominantPriority = '';
 
-    return streak;
-  }, [tasks]);
+  if (highCount > (medCount + lowCount) && highCount > 0) {
+    dominantPriority = 'High';
+    balancePenalty = (highCount - (medCount + lowCount)) * 2;
+    balanceMessage = 'You are focusing heavily on High priority items. Try parsing some Medium and Low tasks to avoid burning out.';
+  } else if (medCount > (highCount + lowCount) && medCount > 0) {
+    dominantPriority = 'Medium';
+    balancePenalty = (medCount - (highCount + lowCount)) * 2;
+    balanceMessage = 'Medium tasks are dominating your log. Ensure High targets aren\'t slipping through the cracks.';
+  } else if (lowCount > (highCount + medCount) && lowCount > 0) {
+    dominantPriority = 'Low';
+    balancePenalty = (lowCount - (highCount + medCount)) * 2;
+    balanceMessage = 'You are focusing heavily on Low priority chores. Shift attention toward higher impact objectives.';
+  }
 
-  // ==========================================
-  // GENERATE PRODUCTIVITY TRENDS DATA
-  // ==========================================
+  workloadScore = Math.min(workloadScore + balancePenalty, 100);
 
-  const generateTrendData = useMemo(() => {
-    const data = [];
-    const now = new Date();
-
-    for (let i = dateRange - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-
-      const dayTasks = tasks.filter((task) => {
-        const taskDate = new Date(task.completed_at || task.completedAt || task.updated_at || task.updatedAt || task.created_at || task.createdAt);
-        taskDate.setHours(0, 0, 0, 0);
-        return taskDate.getTime() === date.getTime();
-      });
-
-      const completed = dayTasks.filter((t) => t.completed).length;
-      const total = dayTasks.length;
-
-      data.push({
-        date: date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
-        completed: completed,
-        pending: total - completed,
-        total: total,
-        completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
-      });
-    }
-
-    return data;
-  }, [dateRange, tasks]);
-  // ==========================================
-  // WEEKLY COMPARISON
-  // ==========================================
-
-  const weeklyComparison = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-
-    // Current week
-    const currentWeekStart = new Date(today);
-    currentWeekStart.setDate(today.getDate() - today.getDay());
-
-    const currentWeekTasks = tasks.filter((task) => {
-      const taskDate = new Date(task.completed_at || task.completedAt || task.updated_at || task.updatedAt || task.created_at || task.createdAt);
-      taskDate.setHours(0, 0, 0, 0);
-      return taskDate >= currentWeekStart && taskDate <= today && task.completed;
-    }).length;
-
-    // Last week
-    const lastWeekStart = new Date(currentWeekStart);
-    lastWeekStart.setDate(currentWeekStart.getDate() - 7);
-
-    const lastWeekEnd = new Date(lastWeekStart);
-    lastWeekEnd.setDate(lastWeekStart.getDate() + 6);
-
-    const lastWeekTasks = tasks.filter((task) => {
-      const taskDate = new Date(task.completed_at || task.completedAt || task.updated_at || task.updatedAt || task.created_at || task.createdAt);
-      taskDate.setHours(0, 0, 0, 0);
-      return taskDate >= lastWeekStart && taskDate <= lastWeekEnd && task.completed;
-    }).length;
-
-    const improvement = lastWeekTasks > 0 ? Math.round(((currentWeekTasks - lastWeekTasks) / lastWeekTasks) * 100) : (currentWeekTasks > 0 ? 100 : 0);
-
-    return {
-      currentWeek: currentWeekTasks,
-      lastWeek: lastWeekTasks,
-      improvement: improvement,
-    };
-  }, [tasks]);
-
-  // ==========================================
-  // SMART INSIGHTS
-  // ==========================================
-
-  const insights = useMemo(() => {
-    const insightsList = [];
-
-    // Insight 1: Productivity rate
-    if (productivity >= 80) {
-      insightsList.push({
-        icon: '🔥',
-        title: 'Exceptional Performance',
-        description: `You're crushing it with ${productivity}% completion rate!`,
-      });
-    } else if (productivity >= 60) {
-      insightsList.push({
-        icon: '⭐',
-        title: 'Strong Progress',
-        description: `You've completed ${productivity}% of your tasks. Keep pushing!`,
-      });
-    } else if (productivity >= 40) {
-      insightsList.push({
-        icon: '📈',
-        title: 'Steady Progress',
-        description: `You're at ${productivity}% completion. Time to focus!`,
-      });
-    }
-
-    // Insight 2: Streak
-    if (calculateStreak >= 7) {
-      insightsList.push({
-        icon: '🏆',
-        title: `${calculateStreak}-Day Streak!`,
-        description: 'Consistency is key. Keep the momentum going!',
-      });
-    } else if (calculateStreak >= 3) {
-      insightsList.push({
-        icon: '⚡',
-        title: 'Nice Streak',
-        description: `${calculateStreak} days of productivity. Almost there!`,
-      });
-    }
-
-    // Insight 3: High priority tasks
-    if (highPriority > 5) {
-      insightsList.push({
-        icon: '⚠️',
-        title: 'Heavy Workload',
-        description: `You have ${highPriority} high-priority tasks. Focus on the most critical ones.`,
-      });
-    }
-
-    // Insight 4: Weekly improvement
-    if (weeklyComparison.improvement > 0) {
-      insightsList.push({
-        icon: '📊',
-        title: 'Week-over-Week Growth',
-        description: `${weeklyComparison.improvement > 0 ? '+' : ''}${weeklyComparison.improvement}% improvement this week!`,
-      });
-    } else if (weeklyComparison.improvement < 0) {
-      insightsList.push({
-        icon: '💡',
-        title: 'Time to Reset',
-        description: `Last week was stronger. Let's get back on track!`,
-      });
-    }
-
-    return insightsList;
-  }, [productivity, calculateStreak, highPriority, weeklyComparison.improvement]);
-
-  // ==========================================
-  // PIE CHART DATA
-  // ==========================================
-
-  const pieData = [
-    { name: 'Completed', value: completedTasks },
-    { name: 'Pending', value: pendingTasks },
-  ];
-
-  const priorityData = [
-    { name: 'High', value: highPriority },
-    { name: 'Medium', value: mediumPriority },
-    { name: 'Low', value: lowPriority },
-  ];
-
-  const COLORS = ['#7c3aed', '#c4b5fd'];
-  const PRIORITY_COLORS = {
-    High: '#ef4444',
-    Medium: '#f59e0b',
-    Low: '#10b981',
+  let workloadHealth = {
+    status: 'Healthy',
+    color: 'green',
+    message: balancePenalty > 0 ? balanceMessage : 'Your workload is balanced and under control.',
+    recommendation: 'Keep maintaining your current pace.',
   };
 
-  // ==========================================
-  // RENDER
-  // ==========================================
+  if (workloadScore >= 15 && workloadScore < 35) {
+    workloadHealth = {
+      status: 'Moderate',
+      color: 'yellow',
+      message: balancePenalty > 0 ? balanceMessage : 'Your backlog is growing, but your performance is keeping it stable.',
+      recommendation: 'Focus on remaining structural targets to clear the deck.',
+    };
+  } else if (workloadScore >= 35) {
+    workloadHealth = {
+      status: 'Overloaded',
+      color: 'red',
+      message: balancePenalty > 0 ? balanceMessage : 'Backlog volume is outstripping your completion speed.',
+      recommendation: dominantPriority === 'Low'
+        ? 'Stop clearing minor tasks. Force-stop incoming workflow and finish High priorities.'
+        : 'Pause incoming tasks and clear out at least 3 alternative priority items.',
+    };
+  }
 
+  // ─── Colors ────────────────────────────────────────────────────────────────
+  const PRIORITY_COLORS = {
+    High:   '#ef4444',
+    Medium: '#f59e0b',
+    Low:    '#10b981',
+  };
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="analytics-layout">
       <Sidebar />
 
       <main className="analytics-main">
+
         {/* HEADER */}
         <div className="analytics-header">
           <div>
@@ -269,194 +205,294 @@ function AnalyticsPage() {
           </div>
         </div>
 
-        {/* KEY METRICS */}
-        <div className="analytics-stats">
-          <div className="analytics-card">
-            <h3>Total Tasks</h3>
-            <h2>{tasks.length}</h2>
-            <p className="card-subtitle">All time</p>
-          </div>
+        <div className="analytics-container">
 
-          <div className="analytics-card">
-            <h3>Completed</h3>
-            <h2>{completedTasks}</h2>
-            <p className="card-subtitle">Tasks finished</p>
-          </div>
+          {/* KEY METRICS */}
+          <div className="analytics-stats">
+            <div className="analytics-card">
+              <h3><Target size={18} /> Total Tasks</h3>
+              <h2>{totalTasks}</h2>
+              <p className="card-subtitle">All time</p>
+            </div>
 
-          <div className="analytics-card">
-            <h3>Pending</h3>
-            <h2>{pendingTasks}</h2>
-            <p className="card-subtitle">Waiting to do</p>
-          </div>
+            <div className="analytics-card">
+              <h3><CheckCircle2 size={18} /> Completed</h3>
+              <h2>{completedTasks}</h2>
+              <p className="card-subtitle">Tasks finished</p>
+            </div>
 
-          <div className="analytics-card">
-            <h3>Productivity</h3>
-            <h2>{productivity}%</h2>
-            <p className="card-subtitle">Completion rate</p>
-          </div>
+            <div className="analytics-card">
+              <h3><Clock3 size={18} /> Pending</h3>
+              <h2>{pendingTasks}</h2>
+              <p className="card-subtitle">Waiting to do</p>
+            </div>
 
-          <div className="analytics-card streak-card">
-            <h3>Current Streak</h3>
-            <h2>{calculateStreak}</h2>
-            <p className="card-subtitle">Days in a row</p>
-            <div className="streak-icon">🔥</div>
-          </div>
+            <div className="analytics-card">
+              <h3><TrendingUp size={18} /> Productivity</h3>
+              <h2>{productivity}%</h2>
+              <p className="card-subtitle">Completion rate</p>
+            </div>
 
-          <div className="analytics-card">
-            <h3>High Priority</h3>
-            <h2>{highPriority}</h2>
-            <p className="card-subtitle">Tasks to focus</p>
-          </div>
-        </div>
+            <div className="analytics-card streak-card">
+              <h3><Flame size={18} /> Current Streak</h3>
+              <h2>{streak}</h2>
+              <p className="card-subtitle">Days in a row</p>
+              <div className="streak-icon">
+                <Flame size={26} />
+              </div>
+            </div>
 
-        {/* PRODUCTIVITY TRENDS */}
-        <div className="chart-card trends-card">
-          <div className="chart-header">
-            <div>
-              <h3>Productivity Trends</h3>
-              <p>Daily completion rate over the last {dateRange} days</p>
+            <div className="analytics-card">
+              <h3>High Priority</h3>
+              <h2>{highPriority}</h2>
+              <p className="card-subtitle">Tasks to focus</p>
             </div>
           </div>
 
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={generateTrendData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-              <defs>
-                <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="date" stroke="var(--text-muted)" />
-              <YAxis stroke="var(--text-muted)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  color: 'var(--text)',
-                }}
-              />
-              <Legend wrapperStyle={{ color: 'var(--text)' }} />
-              <Line
-                type="monotone"
-                dataKey="completed"
-                stroke="#7c3aed"
-                strokeWidth={3}
-                dot={{ fill: '#7c3aed', r: 5 }}
-                activeDot={{ r: 7 }}
-                name="Completed"
-              />
-              <Line
-                type="monotone"
-                dataKey="pending"
-                stroke="#c4b5fd"
-                strokeWidth={2}
-                dot={{ fill: '#c4b5fd', r: 4 }}
-                activeDot={{ r: 6 }}
-                name="Pending"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* TWO COLUMN LAYOUT */}
-        <div className="charts-grid">
-          {/* PRODUCTIVITY TIMELINE */}
-          <div className="chart-card">
+          {/* PRODUCTIVITY TRENDS — driven by dateRange */}
+          <div className="trends-card">
             <div className="chart-header">
               <div>
-                <h3>Productivity Timeline</h3>
-                <p>Your daily performance over the last {dateRange} days</p>
+                <h3>Productivity Trends</h3>
+                <p>Daily completion rate over the last {dateRange} days</p>
               </div>
             </div>
 
-            <div className="timeline-list">
-              {generateTrendData.map((day, index) => {
-                let statusIcon = '⚠️';
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart
+                data={chartTrendData}
+                margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="date" stroke="var(--text-muted)" />
+                <YAxis stroke="var(--text-muted)" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    color: 'var(--text)',
+                  }}
+                />
+                <Legend wrapperStyle={{ color: 'var(--text)' }} />
+                <Line
+                  type="monotone"
+                  dataKey="completed"
+                  stroke="#7c3aed"
+                  strokeWidth={3}
+                  dot={{ fill: '#7c3aed', r: 5 }}
+                  activeDot={{ r: 7 }}
+                  name="Completed"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pending"
+                  stroke="#c4b5fd"
+                  strokeWidth={2}
+                  dot={{ fill: '#c4b5fd', r: 4 }}
+                  activeDot={{ r: 6 }}
+                  name="Pending"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-                if (day.completionRate >= 90) {
-                  statusIcon = '🚀';
-                } else if (day.completionRate >= 60) {
-                  statusIcon = '🔥';
-                } else if (day.completionRate >= 40) {
-                  statusIcon = '✅';
-                }
-
-                return (
-                  <div key={index} className="timeline-row">
-                    <div className="timeline-date">
-                      {day.date}
+          {/* SMART INSIGHTS */}
+          {insights.length > 0 && (
+            <div className="insights-section">
+              <h3>Smart Insights</h3>
+              <div className="insights-grid">
+                {insights.map((insight, index) => {
+                  const Icon = iconMap[insight.icon];
+                  return (
+                    <div key={index} className="insight-card">
+                      <div className="insight-icon">
+                        {Icon && <Icon size={20} />}
+                      </div>
+                      <div className="insight-content">
+                        <h4>{insight.title}</h4>
+                        <p>{insight.description}</p>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                    <div className="timeline-progress">
-                      <div
-                        className="timeline-progress-fill"
-                        style={{
-                          width: `${day.completionRate}%`,
-                        }}
-                      />
+          {/* TWO COLUMN LAYOUT */}
+          <div className="charts-grid">
+
+            {/* PRODUCTIVITY TIMELINE — always 10 days, unaffected by selector */}
+            <div className="timeline-chart">
+              <div className="chart-header">
+                <div>
+                  <h3>Productivity Timeline</h3>
+                  <p>Your daily performance over the last 10 days</p>
+                </div>
+              </div>
+
+              <div className="timeline-list">
+                {timelineTrendData?.map((day, index) => {
+                  const STATUS_ICONS = {
+                    excellent: Rocket,
+                    good:      Flame,
+                    average:   CheckCircle2,
+                    low:       AlertTriangle,
+                  };
+                  const StatusIcon = STATUS_ICONS[day.status] || AlertTriangle;
+
+                  return (
+                    <div key={index} className="timeline-row">
+                      <div className="timeline-date">{day.date}</div>
+                      <div className="timeline-progress">
+                        <div
+                          className="timeline-progress-fill"
+                          style={{ width: `${day.completionRate}%` }}
+                        />
+                      </div>
+                      <div className="timeline-stats">
+                        <span className="timeline-percent">{day.completionRate}%</span>
+                        <span className="timeline-tasks">
+                          <StatusIcon size={16} />
+                          {day.completed} task{day.completed !== 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
 
-                    <div className="timeline-stats">
-                      <span className="timeline-percent">
-                        {day.completionRate}%
-                      </span>
+            {/* RIGHT COLUMN — Workload Health + Weekly Comparison */}
+            <div className="analytics-column">
 
-                      <span className="timeline-tasks">
-                        {statusIcon} {day.completed} task
-                        {day.completed !== 1 ? 's' : ''}
-                      </span>
+              {/* WORKLOAD HEALTH */}
+              <div className="chart-card workload-card">
+                <div className="chart-header">
+                  <h3>Workload Health</h3>
+                </div>
+
+                <div className={`workload-status ${workloadHealth.color}`}>
+                  <div className="workload-icon">
+                    {balancePenalty > 0 ? (
+                      <Scale size={30} />
+                    ) : workloadHealth.status === 'Healthy' ? (
+                      <ShieldCheck size={30} />
+                    ) : workloadHealth.status === 'Moderate' ? (
+                      <Clock3 size={30} />
+                    ) : (
+                      <ShieldAlert size={30} />
+                    )}
+                  </div>
+                  <div className="workload-info">
+                    <h2>{workloadHealth.status}</h2>
+                    <p>{workloadHealth.message}</p>
+                  </div>
+                </div>
+
+                <div className="workload-metrics">
+                  <div className="metric">
+                    <span>Pending</span>
+                    <strong>{pendingTasks}</strong>
+                  </div>
+                  <div className="metric">
+                    <span>Balance Penalty</span>
+                    <strong style={{ color: balancePenalty > 0 ? 'var(--red)' : 'inherit' }}>
+                      +{balancePenalty}
+                    </strong>
+                  </div>
+                  <div className="metric">
+                    <span>Score</span>
+                    <strong>{workloadScore}</strong>
+                  </div>
+                </div>
+
+                <div className="health-progress">
+                  <div className="progress-track">
+                    <div
+                      className={`progress-fill ${workloadHealth.color}`}
+                      style={{ width: `${workloadScore}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="workload-recommendation">
+                  <AlertTriangle size={16} />
+                  <span>{workloadHealth.recommendation}</span>
+                </div>
+              </div>
+
+              {/* WEEKLY COMPARISON */}
+              <div className="chart-card">
+                <div className="chart-header">
+                  <h3>Weekly Comparison</h3>
+                </div>
+
+                <div className="weekly-comparison">
+                  <div className="week-item">
+                    <span className="week-label">This Week</span>
+                    <div className="week-stat">
+                      <span className="week-number">{weeklyComparison.currentWeek}</span>
+                      <span className="week-subtext">tasks completed</span>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="comparison-arrow">
+                    <span className={`arrow ${weeklyComparison.improvement >= 0 ? 'up' : 'down'}`}>
+                      {weeklyComparison.improvement >= 0
+                        ? <TrendingUp size={20} />
+                        : <TrendingDown size={20} />}
+                    </span>
+                    <span className={`percentage ${weeklyComparison.improvement >= 0 ? 'positive' : 'negative'}`}>
+                      {weeklyComparison.improvement >= 0 ? '+' : ''}
+                      {weeklyComparison.improvement}%
+                    </span>
+                  </div>
+
+                  <div className="week-item">
+                    <span className="week-label">Last Week</span>
+                    <div className="week-stat">
+                      <span className="week-number">{weeklyComparison.lastWeek}</span>
+                      <span className="week-subtext">tasks completed</span>
+                    </div>
+                  </div>
+                </div>
+
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart
+                    data={[
+                      { week: 'Last', tasks: weeklyComparison.lastWeek },
+                      { week: 'This', tasks: weeklyComparison.currentWeek },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="week" stroke="var(--text-muted)" />
+                    <YAxis stroke="var(--text-muted)" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'var(--surface)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        color: 'var(--text)',
+                      }}
+                    />
+                    <Bar dataKey="tasks" fill="#7c3aed" radius={[10, 10, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
             </div>
           </div>
 
-          {/* WEEKLY COMPARISON & PRIORITY */}
-          <div className="analytics-column">
-            {/* WEEKLY COMPARISON */}
+          {/* TASK COMPLETION STATS */}
+          <div className="charts-grid">
             <div className="chart-card">
-              <div className="chart-header">
-                <h3>Weekly Comparison</h3>
-              </div>
-
-              <div className="weekly-comparison">
-                <div className="week-item">
-                  <span className="week-label">This Week</span>
-                  <div className="week-stat">
-                    <span className="week-number">{weeklyComparison.currentWeek}</span>
-                    <span className="week-subtext">tasks completed</span>
-                  </div>
-                </div>
-
-                <div className="comparison-arrow">
-                  <span className={`arrow ${weeklyComparison.improvement >= 0 ? 'up' : 'down'}`}>
-                    {weeklyComparison.improvement >= 0 ? '↑' : '↓'}
-                  </span>
-                  <span className={`percentage ${weeklyComparison.improvement >= 0 ? 'positive' : 'negative'}`}>
-                    {weeklyComparison.improvement >= 0 ? '+' : ''}
-                    {weeklyComparison.improvement}%
-                  </span>
-                </div>
-
-                <div className="week-item">
-                  <span className="week-label">Last Week</span>
-                  <div className="week-stat">
-                    <span className="week-number">{weeklyComparison.lastWeek}</span>
-                    <span className="week-subtext">tasks completed</span>
-                  </div>
-                </div>
-              </div>
-
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={[
-                  { week: 'Last', tasks: weeklyComparison.lastWeek },
-                  { week: 'This', tasks: weeklyComparison.currentWeek },
-                ]}>
+              <h3>Priority Distribution</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={priorityData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="week" stroke="var(--text-muted)" />
+                  <XAxis dataKey="name" stroke="var(--text-muted)" />
                   <YAxis stroke="var(--text-muted)" />
                   <Tooltip
                     contentStyle={{
@@ -466,22 +502,28 @@ function AnalyticsPage() {
                       color: 'var(--text)',
                     }}
                   />
-                  <Bar dataKey="tasks" fill="#7c3aed" radius={[10, 10, 0, 0]} />
+                  <Bar dataKey="value" fill="#7c3aed" radius={[10, 10, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* PRIORITY BREAKDOWN */}
             <div className="chart-card">
               <div className="chart-header">
                 <h3>Priority Breakdown</h3>
               </div>
-
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
-                  <Pie data={priorityData} dataKey="value" outerRadius={80} label>
+                  <Pie
+                    data={priorityData}
+                    dataKey="value"
+                    outerRadius={80}
+                    label
+                  >
                     {priorityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={PRIORITY_COLORS[entry.name]} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={PRIORITY_COLORS[entry.name]}
+                      />
                     ))}
                   </Pie>
                   <Tooltip
@@ -496,70 +538,7 @@ function AnalyticsPage() {
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
 
-        {/* SMART INSIGHTS */}
-        {insights.length > 0 && (
-          <div className="insights-section">
-            <h3>Smart Insights</h3>
-            <div className="insights-grid">
-              {insights.map((insight, index) => (
-                <div key={index} className="insight-card">
-                  <div className="insight-icon">{insight.icon}</div>
-                  <div className="insight-content">
-                    <h4>{insight.title}</h4>
-                    <p>{insight.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* TASK COMPLETION STATS */}
-        <div className="charts-grid">
-          <div className="chart-card">
-            <h3>Task Overview</h3>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie data={pieData} dataKey="value" outerRadius={100}>
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    color: 'var(--text)',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="chart-card">
-            <h3>Priority Distribution</h3>
-
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={priorityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="name" stroke="var(--text-muted)" />
-                <YAxis stroke="var(--text-muted)" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    color: 'var(--text)',
-                  }}
-                />
-                <Bar dataKey="value" fill="#7c3aed" radius={[10, 10, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
         </div>
       </main>
     </div>

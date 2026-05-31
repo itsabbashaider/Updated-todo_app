@@ -6,7 +6,7 @@ const Joi = require("joi");
 
 const createTodoSchema = Joi.object({
   title: Joi.string().required().min(3).max(100),
-  description: Joi.string().optional().allow(null, ""),
+  description: Joi.string().optional(),
   completed: Joi.boolean().optional().default(false),
   priority: Joi.string().valid(
       "low",
@@ -20,7 +20,7 @@ const createTodoSchema = Joi.object({
 // ─── Update ───────────────────────────────────────────────────────────────────
 const updateTodoSchema = Joi.object({
   title: Joi.string().optional().min(3).max(100),
-  description: Joi.string().optional().allow(null, ""),
+  description: Joi.string().optional(),
   completed: Joi.boolean().optional(),
   completed_at: Joi.date().allow(null).optional(),
   created_at: Joi.date().optional(),
