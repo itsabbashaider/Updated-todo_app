@@ -10,7 +10,7 @@ const HTTP_STATUSES =
 exports.getDashboard =
   asyncHandler(async (req, res) => {
     const data =
-      await dashboardService.getDashboardData();
+      await dashboardService.getDashboardData(req);
 
     res
       .status(HTTP_STATUSES.OK)

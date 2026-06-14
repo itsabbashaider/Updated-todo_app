@@ -1,13 +1,10 @@
-// ─── Dependencies ─────────────────────────────────────────────────────────────
 const express        = require('express');
 const router         = express.Router();
 const taskController = require('../controllers/task.controller');
 
-// ─── Middlewares ──────────────────────────────────────────────────────────────
-const asyncHandler    = require('../middlewares/async-handler.middleware');
+const authenticate    = require('../middlewares/auth.middleware');
 const validateRequest = require('../middlewares/validate-request.middleware');
 
-// ─── Schemas ──────────────────────────────────────────────────────────────────
 const {
   createTodoSchema,
   updateTodoSchema,
@@ -15,30 +12,37 @@ const {
 } = require('../schemas/task.schema');
 
 // ─── Collection Routes ────────────────────────────────────────────────────────
+
 router.get('/',
-  asyncHandler(taskController.getAll)
+  authenticate,
+  taskController.getAll
 );
 
 router.post('/',
+  authenticate,
   validateRequest(createTodoSchema),
-  asyncHandler(taskController.create)
+  taskController.create
 );
 
 // ─── Single Resource Routes ───────────────────────────────────────────────────
+
 router
   .route('/:task_id')
   .get(
+    authenticate,
     validateRequest(todoIdParamSchema, 'params'),
-    asyncHandler(taskController.getOne)
+    taskController.getOne
   )
   .put(
+    authenticate,
     validateRequest(todoIdParamSchema, 'params'),
     validateRequest(updateTodoSchema),
-    asyncHandler(taskController.update)
+    taskController.update
   )
   .delete(
+    authenticate,
     validateRequest(todoIdParamSchema, 'params'),
-    asyncHandler(taskController.remove)
+    taskController.remove
   );
 
 module.exports = router;

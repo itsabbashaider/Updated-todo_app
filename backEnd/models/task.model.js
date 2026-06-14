@@ -1,99 +1,94 @@
-"use strict";
+'use strict';
 
 module.exports = (sequelize, DataTypes) => {
-
   const Task = sequelize.define(
-
-    "Task",
-
+    'Task',
     {
-
       task_id: {
+        type: DataTypes.UUID,
+        primaryKey: true,
+        defaultValue: DataTypes.UUIDV4,  
+        allowNull: false,
+      },
 
-        type:
-          DataTypes.INTEGER,
-
-        primaryKey:
-          true,
-
-        autoIncrement:
-          true,
-
+      user_id: {
+        type: DataTypes.UUID,
+        allowNull: false,
+        references: {
+          model: 'users',
+          key: 'user_id',
+        },
+        onDelete: 'CASCADE',
       },
 
       title: {
-
-        type:
-          DataTypes.STRING,
-
-        allowNull:
-          false,
-
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        validate: {
+          notEmpty: true,
+          len: [1, 255],
+        },
       },
 
       description: {
-
-        type:
-          DataTypes.TEXT,
-
-        allowNull:
-          true,
-
-      },
-
-      completed: {
-
-        type:
-          DataTypes.BOOLEAN,
-
-        defaultValue:
-          false,
-
+        type: DataTypes.TEXT,
+        allowNull: true,
       },
 
       priority: {
+        type: DataTypes.STRING(50),
+        allowNull: false,
+        defaultValue: 'low',
+        validate: {
+          isIn: [['high', 'medium', 'low']],
+        },
+      },
 
-        type:
-          DataTypes.STRING,
+      category: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+      },
 
-        allowNull:
-          false,
+      tags: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+        defaultValue: [],
+      },
 
-        defaultValue:
-          "low",
-
+      completed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
       },
 
       completed_at: {
-
-        type:
-          DataTypes.DATE,
-
-        allowNull:
-          true,
-
+        type: DataTypes.DATE,
+        allowNull: true,
       },
 
+      due_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
-
     {
-
-      tableName:
-        "Tasks",
-
-      timestamps:
-        true,
-
-      createdAt:
-        "created_at",
-
-      updatedAt:
-        "updated_at",
-
+      tableName: 'tasks',
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+      underscored: true,
     }
-
   );
 
-  return Task;
+  Task.associate = (models) => {
+    if (models.User) {
+      Task.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        as: 'user',
+        onDelete: 'CASCADE',
+      });
+    }
+  };
 
+  return Task;
 };

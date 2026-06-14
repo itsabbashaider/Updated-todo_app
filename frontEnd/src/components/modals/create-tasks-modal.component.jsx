@@ -14,242 +14,140 @@ import {
 
 import ConfirmModal from './confirmation-modal.component';
 
-import {
-  createTaskSchema,
-} from '../../schemas/task.schema';
+import { createTaskSchema } from '../../schemas/task.schema';
+import { sanitizeTaskInput } from '../../utils/validation.util';
 
-// ─── Create Modal Component ─────────────────────────────────────────────────
+function CreateModal({ isOpen, onClose, onCreate }) {
 
-function CreateModal({
-  isOpen,
-  onClose,
-  onCreate,
-}) {
-
-  const [confirmOpen, setConfirmOpen] =
-    useState(false);
-
-  const dirtyRef =
-    useRef(false);
-
-  // ─── HANDLE CLOSE ─────────────────────────────────────────────────────────
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isValid, setIsValid]         = useState(false);
+  const dirtyRef = useRef(false);
 
   const handleClose = useCallback(
     (dirty) => {
-
-      if (dirty) {
-
-        setConfirmOpen(true);
-
-        return;
-
-      }
-
+      if (dirty) { setConfirmOpen(true); return; }
       onClose();
-
     },
     [onClose]
   );
 
   const handleConfirmClose = () => {
-
     setConfirmOpen(false);
-
     onClose();
-
   };
 
-  // ─── ESCAPE KEY ───────────────────────────────────────────────────────────
-
   useEffect(() => {
-
     const handleEsc = (e) => {
-
-      if (e.key === 'Escape') {
-        handleClose(dirtyRef.current);
-      }
-
+      if (e.key === 'Escape') handleClose(dirtyRef.current);
     };
-
-    if (isOpen) {
-
-      window.addEventListener(
-        'keydown',
-        handleEsc
-      );
-
-    }
-
-    return () => {
-
-      window.removeEventListener(
-        'keydown',
-        handleEsc
-      );
-
-    };
-
+    if (isOpen) window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, handleClose]);
-
-  // ─── HIDE ─────────────────────────────────────────────────────────────────
 
   if (!isOpen) return null;
 
-  // ─── UI ───────────────────────────────────────────────────────────────────
-
   return (
-
     <div className="overlay">
-
       <Formik
-
+        validateOnChange={false}
+        validateOnBlur={false}
         initialValues={{
-          title       : '',
-          description : '',
-          priority    : 'low',
+          title:       '',
+          description: '',
+          priority:    'low',
         }}
-
-        validationSchema={
-          createTaskSchema
-        }
-
-        onSubmit={async (
-          values,
-          actions
-        ) => {
-
-          await onCreate(values);
-
+        validationSchema={createTaskSchema}
+        onSubmit={async (values, actions) => {
+          const cleanData = sanitizeTaskInput(values);
+          await onCreate(cleanData);
           actions.resetForm();
-
           onClose();
-
         }}
-
       >
-
-        {({ dirty }) => {
+        {({ dirty, values, isSubmitting }) => {
 
           dirtyRef.current = dirty;
 
           return (
+            <>
+              <ValidationEffect values={values} onValidChange={setIsValid} />
 
-            <div
-              className="modal"
-              onClick={(e) =>
-                e.stopPropagation()
-              }
-            >
+              <div className="modal">
+                <h2>Create Task</h2>
 
-              <h2>
-                Create Task
-              </h2>
+                <Form>
 
-              <Form>
+                  <Field
+                    type="text"
+                    name="title"
+                    placeholder="Enter task title..."
+                    maxLength="255"
+                  />
+                  <ErrorMessage name="title" component="div" className="error" />
 
-                {/* TITLE */}
+                  <Field
+                    as="textarea"
+                    name="description"
+                    placeholder="Enter task description..."
+                    maxLength="5000"
+                  />
+                  <ErrorMessage name="description" component="div" className="error" />
 
-                <Field
-                  type="text"
-                  name="title"
-                  placeholder="Enter task title..."
-                />
+                  <Field as="select" name="priority">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </Field>
+                  <ErrorMessage name="priority" component="div" className="error" />
 
-                <ErrorMessage
-                  name="title"
-                  component="div"
-                  className="error"
-                />
+                  <div className="modal-actions">
+                    <button
+                      className="btn primary"
+                      type="submit"
+                      disabled={!isValid || isSubmitting}
+                    >
+                      {isSubmitting ? 'Creating...' : 'Create'}
+                    </button>
 
-                {/* DESCRIPTION */}
+                    <button
+                      className="btn secondary"
+                      type="button"
+                      onClick={() => handleClose(dirty)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
 
-                <Field
-                  as="textarea"
-                  name="description"
-                  placeholder="Enter task description..."
-                />
-
-                <ErrorMessage
-                  name="description"
-                  component="div"
-                  className="error"
-                />
-
-                {/* PRIORITY */}
-
-                <Field
-                  as="select"
-                  name="priority"
-                >
-
-                  <option value="low">
-                    Low
-                  </option>
-
-                  <option value="medium">
-                    Medium
-                  </option>
-
-                  <option value="high">
-                    High
-                  </option>
-
-                </Field>
-
-                <ErrorMessage
-                  name="priority"
-                  component="div"
-                  className="error"
-                />
-
-                {/* BUTTONS */}
-
-                <div className="modal-actions">
-
-                  <button
-                    className="btn primary"
-                    type="submit"
-                  >
-                    Create
-                  </button>
-
-                  <button
-                    className="btn secondary"
-                    type="button"
-                    onClick={() =>
-                      handleClose(dirty)
-                    }
-                  >
-                    Cancel
-                  </button>
-
-                </div>
-
-              </Form>
-
-            </div>
-
+                </Form>
+              </div>
+            </>
           );
-
         }}
-
       </Formik>
-
-      {/* CONFIRM MODAL */}
 
       <ConfirmModal
         isOpen={confirmOpen}
         message="You have unsaved changes. Are you sure you want to cancel?"
-        onClose={() =>
-          setConfirmOpen(false)
-        }
+        onClose={() => setConfirmOpen(false)}
         onConfirm={handleConfirmClose}
       />
-
     </div>
-
   );
+}
 
+// ─── Validates values against schema on every change via useEffect ────────────
+function ValidationEffect({ values, onValidChange }) {
+  useEffect(() => {
+    let cancelled = false;
+
+    createTaskSchema.isValid(values).then((valid) => {
+      if (!cancelled) onValidChange(valid);
+    });
+
+    return () => { cancelled = true; };
+  }, [values, onValidChange]);
+
+  return null;
 }
 
 export default CreateModal;

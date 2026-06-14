@@ -7,7 +7,7 @@ const HTTP_STATUSES = require('../constants/http-status.constant');
 exports.getAnalytics = async (req, res) => {
   const range = Number(req.query.range) || 7;
 
-  const analytics = await analyticsService.getAnalytics(range);
+  const analytics = await analyticsService.getAnalytics(req, range);
 
   res.status(HTTP_STATUSES.OK).json({
     success: true,

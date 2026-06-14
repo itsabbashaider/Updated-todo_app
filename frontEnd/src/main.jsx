@@ -1,9 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-
-import "./styles/achievements.css"
+import "./styles/login.css";
+import "./styles/forgot-password.css";
+import "./styles/signup.css";
+import "./styles/achievements.css";
 import "./styles/global.css";
+import "./styles/state-container.css";
 import "./styles/buttons.css";
 import "./styles/analytics.css";
 import "./styles/calendar.css";
@@ -13,6 +16,7 @@ import "./styles/sidebar.css";
 import "./styles/task-card.css";
 import "./styles/task-list.css";
 import "./styles/tasks.css";
+import "./styles/settings.css";
 
 import App from "./App.jsx";
 

@@ -1,4 +1,3 @@
-import axiosInstance from './axios-instance.service';
+import axiosInstance from "./axios-instance.service";
 
-export const getDashboard = () =>
-  axiosInstance.get('/dashboard');
+export const getDashboard = () => axiosInstance.get("/dashboard");

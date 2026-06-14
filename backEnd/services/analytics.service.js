@@ -1,394 +1,175 @@
-// ─── Dependencies ─────────────────────────────────────────────────────────────
-const { Task } = require('../models');
+const { sequelize, Sequelize } = require("../models");
+const {
+  buildAnalyticsResponse,
+  parseAnalyticsRange,
+} = require("../utils/analytics.util");
+const { getRequestUserId } = require("../utils/request.util");
 
-const { Op } = require('sequelize');
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const startOfDay = (date) => {
-  const d = new Date(date);
-
-  d.setHours(0, 0, 0, 0);
-
-  return d;
-};
-
-// ─── Get Analytics ────────────────────────────────────────────────────────────
-exports.getAnalytics = async (range = 7) => {
-  // ─── Basic Counts ──────────────────────────────────────────────────────────
-  const totalTasks =
-    await Task.count();
-
-  const completedTasks =
-    await Task.count({
-      where: {
-        completed: true,
-      },
-    });
-
-  const pendingTasks =
-    await Task.count({
-      where: {
-        completed: false,
-      },
-    });
-
-  // ─── Priority Counts ───────────────────────────────────────────────────────
-  const highPriority =
-    await Task.count({
-      where: {
-        priority: {
-          [Op.iLike]: 'high',
-        },
-      },
-    });
-
-  const mediumPriority =
-    await Task.count({
-      where: {
-        priority: {
-          [Op.iLike]: 'medium',
-        },
-      },
-    });
-
-  const lowPriority =
-    await Task.count({
-      where: {
-        priority: {
-          [Op.iLike]: 'low',
-        },
-      },
-    });
-
-  // ─── Productivity ──────────────────────────────────────────────────────────
-  const productivity =
-    totalTasks > 0
-      ? Math.round(
-          (completedTasks / totalTasks) *
-            100
-        )
-      : 0;
-
-  // ─── Recent Tasks For Trends/Streaks ───────────────────────────────────────
-  const tasks = await Task.findAll({
-    where: {
-      created_at: {
-        [Op.gte]: new Date(
-          Date.now() -
-            range *
-              24 *
-              60 *
-              60 *
-              1000
-        ),
-      },
-    },
-
-    order: [['created_at', 'DESC']],
-  });
-
-  // ─── Streak ────────────────────────────────────────────────────────────────
-  let streak = 0;
-
-  const today = startOfDay(
-    new Date()
-  );
-
-  let currentDate = new Date(today);
-
-  while (true) {
-    const hasCompletedTask =
-      tasks.some((task) => {
-        if (!task.completed) {
-          return false;
-        }
-
-        const taskDate = startOfDay(
-          task.completed_at ||
-            task.updated_at ||
-            task.created_at
-        );
-
-        return (
-          taskDate.getTime() ===
-          currentDate.getTime()
-        );
-      });
-
-    if (!hasCompletedTask) {
-      break;
-    }
-
-    streak++;
-
-    currentDate.setDate(
-      currentDate.getDate() - 1
-    );
-  }
-
-// ─── Trend Data ────────────────────────────────────────────────────────────
-  const trendData = [];
-
-  for (
-    let i = range - 1;
-    i >= 0;
-    i--
-  ) {
-    const current = startOfDay(
-      new Date()
-    );
-
-    current.setDate(
-      current.getDate() - i
-    );
-
-    const dayTasks = tasks.filter(
-      (task) => {
-        const taskDate =
-          startOfDay(
-            task.completed_at ||
-              task.updated_at ||
-              task.created_at
-          );
-
-        return (
-          taskDate.getTime() ===
-          current.getTime()
-        );
-      }
-    );
-
-    const completed =
-      dayTasks.filter(
-        (task) => task.completed
-      ).length;
-
-    const total =
-      dayTasks.length;
-
-    const completionRate =
-      total > 0
-        ? Math.round(
-            (completed / total) * 100
-          )
-        : 0;
-
-    // ─── Status Logic Moved To Backend ─────────────────────────────────────
-    let status = 'low';
-
-    if (completionRate >= 90) {
-      status = 'excellent';
-    } else if (
-      completionRate >= 60
-    ) {
-      status = 'good';
-    } else if (
-      completionRate >= 40
-    ) {
-      status = 'average';
-    }
-
-    trendData.push({
-      date:
-        current.toLocaleDateString(
-          'en-US',
-          {
-            weekday: 'short',
-            day: 'numeric',
-          }
-        ),
-
+const ANALYTICS_QUERY = `
+  WITH params AS (
+    SELECT (NOW() AT TIME ZONE 'UTC')::date AS today
+  ),
+  user_tasks AS (
+    SELECT
+      task_id,
+      priority,
       completed,
+      created_at,
+      completed_at
+    FROM tasks
+    WHERE user_id = :userId
+  ),
+  stats AS (
+    SELECT
+      COUNT(*)::int AS total_count,
+      COUNT(*) FILTER (WHERE completed = true)::int AS completed_count,
+      COUNT(*) FILTER (WHERE completed = false)::int AS pending_count,
+      COUNT(*) FILTER (WHERE LOWER(priority) = 'high')::int AS high_priority_count,
+      COUNT(*) FILTER (WHERE LOWER(priority) = 'medium')::int AS medium_priority_count,
+      COUNT(*) FILTER (WHERE LOWER(priority) = 'low')::int AS low_priority_count,
+      COALESCE(
+        ROUND(
+          100.0 * COUNT(*) FILTER (WHERE completed = true) / NULLIF(COUNT(*), 0)
+        ),
+        0
+      )::int AS completion_rate
+    FROM user_tasks
+  ),
+  completed_days AS (
+    SELECT DISTINCT (completed_at AT TIME ZONE 'UTC')::date AS day
+    FROM user_tasks
+    WHERE completed = true AND completed_at IS NOT NULL
+  ),
+  streak_anchor AS (
+    SELECT
+      CASE
+        WHEN EXISTS (
+          SELECT 1
+          FROM completed_days cd, params p
+          WHERE cd.day = p.today
+        ) THEN (SELECT today FROM params)
+        WHEN EXISTS (
+          SELECT 1
+          FROM completed_days cd, params p
+          WHERE cd.day = p.today - 1
+        ) THEN (SELECT today - 1 FROM params)
+        ELSE NULL
+      END AS anchor_day
+  ),
+  numbered_streak_days AS (
+    SELECT
+      cd.day,
+      ROW_NUMBER() OVER (ORDER BY cd.day DESC) AS rn
+    FROM completed_days cd
+    CROSS JOIN streak_anchor sa
+    WHERE sa.anchor_day IS NOT NULL
+      AND cd.day <= sa.anchor_day
+  ),
+  streak_groups AS (
+    SELECT
+      day,
+      day + (rn::int * INTERVAL '1 day') AS streak_group
+    FROM numbered_streak_days
+  ),
+  current_streak AS (
+    SELECT
+      COALESCE(
+        COUNT(*) FILTER (
+          WHERE streak_group = (
+            SELECT anchor_day + INTERVAL '1 day'
+            FROM streak_anchor
+          )
+        ),
+        0
+      )::int AS streak
+    FROM streak_groups
+  ),
+  date_range AS (
+    SELECT generate_series(
+      (SELECT today FROM params) - (:rangeDays * INTERVAL '1 day'),
+      (SELECT today FROM params),
+      '1 day'::interval
+    )::date AS day
+  ),
+  daily_stats AS (
+    SELECT
+      (created_at AT TIME ZONE 'UTC')::date AS day,
+      COUNT(*)::int AS total,
+      COUNT(*) FILTER (WHERE completed = true)::int AS completed
+    FROM user_tasks
+    WHERE created_at >= (
+      ((SELECT today FROM params) - (:rangeDays * INTERVAL '1 day'))::timestamp AT TIME ZONE 'UTC'
+    )
+    GROUP BY (created_at AT TIME ZONE 'UTC')::date
+  ),
+  trend_data AS (
+    SELECT
+      COALESCE(
+        json_agg(
+          json_build_object(
+            'date', dr.day::timestamp AT TIME ZONE 'UTC',
+            'total', COALESCE(ds.total, 0),
+            'completed', COALESCE(ds.completed, 0),
+            'pending', COALESCE(ds.total, 0) - COALESCE(ds.completed, 0),
+            'completionRate',
+              CASE
+                WHEN COALESCE(ds.total, 0) > 0
+                  THEN ROUND(100.0 * COALESCE(ds.completed, 0) / ds.total)::int
+                ELSE 0
+              END
+          )
+          ORDER BY dr.day
+        ),
+        '[]'::json
+      ) AS trend_data
+    FROM date_range dr
+    LEFT JOIN daily_stats ds ON ds.day = dr.day
+  ),
+  weekly_comparison AS (
+    SELECT
+      COUNT(*) FILTER (
+        WHERE completed = true
+          AND completed_at IS NOT NULL
+          AND (completed_at AT TIME ZONE 'UTC')::date
+            BETWEEN (SELECT today FROM params) - 6 AND (SELECT today FROM params)
+      )::int AS current_week,
+      COUNT(*) FILTER (
+        WHERE completed = true
+          AND completed_at IS NOT NULL
+          AND (completed_at AT TIME ZONE 'UTC')::date
+            BETWEEN (SELECT today FROM params) - 13 AND (SELECT today FROM params) - 7
+      )::int AS last_week
+    FROM user_tasks
+  )
+  SELECT
+    stats.total_count,
+    stats.completed_count,
+    stats.pending_count,
+    stats.high_priority_count,
+    stats.medium_priority_count,
+    stats.low_priority_count,
+    stats.completion_rate,
+    current_streak.streak,
+    trend_data.trend_data,
+    weekly_comparison.current_week,
+    weekly_comparison.last_week
+  FROM stats
+  CROSS JOIN current_streak
+  CROSS JOIN trend_data
+  CROSS JOIN weekly_comparison;
+`;
 
-      pending:
-        total - completed,
+exports.getAnalytics = async (req, range = 7) => {
+  const userId = getRequestUserId(req);
+  const safeRange = parseAnalyticsRange(range);
 
-      total,
-
-      completionRate,
-
-      status,
-    });
-  }
-
-  // ─── Weekly Comparison ─────────────────────────────────────────────────────
-  const todayDate = startOfDay(
-    new Date()
-  );
-
-  const currentWeekStart =
-    new Date(todayDate);
-
-  currentWeekStart.setDate(
-    todayDate.getDate() -
-      todayDate.getDay()
-  );
-
-  const lastWeekStart =
-    new Date(currentWeekStart);
-
-  lastWeekStart.setDate(
-    lastWeekStart.getDate() - 7
-  );
-
-  const lastWeekEnd =
-    new Date(lastWeekStart);
-
-  lastWeekEnd.setDate(
-    lastWeekEnd.getDate() + 6
-  );
-
-  const currentWeek =
-    await Task.count({
-      where: {
-        completed: true,
-
-        created_at: {
-          [Op.gte]:
-            currentWeekStart,
-        },
-      },
-    });
-
-  const lastWeek =
-    await Task.count({
-      where: {
-        completed: true,
-
-        created_at: {
-          [Op.between]: [
-            lastWeekStart,
-            lastWeekEnd,
-          ],
-        },
-      },
-    });
-
-  const improvement =
-    lastWeek > 0
-      ? Math.round(
-          ((currentWeek -
-            lastWeek) /
-            lastWeek) *
-            100
-        )
-      : currentWeek > 0
-      ? 100
-      : 0;
-
-  // ─── Insights ──────────────────────────────────────────────────────────────
-  const insights = [];
-
-  if (productivity >= 80) {
-    insights.push({
-      icon: 'trending-up',
-
-      title:
-        'Exceptional Performance',
-
-      description: `You're crushing it with ${productivity}% completion rate!`,
-    });
-  }
-
-  if (streak >= 3) {
-    insights.push({
-      icon: 'Zap',
-
-      title: `${streak}-Day Streak`,
-
-      description:
-        'Consistency is building momentum!',
-    });
-  }
-
-  if (highPriority >= 5) {
-    insights.push({
-      icon: 'alert-triangle',
-
-      title: 'Heavy Workload',
-
-      description: `You have ${highPriority} high-priority tasks.`,
-    });
-  }
-
-  if (insights.length === 0) {
-  insights.push({
-    icon: 'info',
-
-    title: 'Keep Going',
-
-    description:
-      'Stay consistent and complete tasks to unlock deeper productivity insights.',
+  const [row] = await sequelize.query(ANALYTICS_QUERY, {
+    replacements: {
+      userId,
+      rangeDays: safeRange - 1,
+    },
+    type: Sequelize.QueryTypes.SELECT,
   });
-}
 
-  // ─── Charts ────────────────────────────────────────────────────────────────
-  const pieData = [
-    {
-      name: 'Completed',
-
-      value: completedTasks,
-    },
-
-    {
-      name: 'Pending',
-
-      value: pendingTasks,
-    },
-  ];
-
-  const priorityData = [
-    {
-      name: 'High',
-
-      value: highPriority,
-    },
-
-    {
-      name: 'Medium',
-
-      value: mediumPriority,
-    },
-
-    {
-      name: 'Low',
-
-      value: lowPriority,
-    },
-  ];
-
-  // ─── Response ──────────────────────────────────────────────────────────────
-  return {
-    totalTasks,
-
-    completedTasks,
-
-    pendingTasks,
-
-    highPriority,
-
-    mediumPriority,
-
-    lowPriority,
-
-    productivity,
-
-    streak,
-
-    trendData,
-
-    pieData,
-
-    priorityData,
-
-    insights,
-
-    weeklyComparison: {
-      currentWeek,
-
-      lastWeek,
-
-      improvement,
-    },
-  };
+  return buildAnalyticsResponse(row);
 };

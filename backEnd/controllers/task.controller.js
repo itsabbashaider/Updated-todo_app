@@ -13,7 +13,7 @@ exports.create = asyncHandler(
   async (req, res) => {
     const task =
       await taskService.createTask(
-        req.body
+        req.body, req
       );
 
     res
@@ -33,7 +33,7 @@ exports.getAll = asyncHandler(
   async (req, res) => {
     const result =
       await taskService.getTasks(
-        req.query
+        req, req.query
       );
 
     res
@@ -43,7 +43,7 @@ exports.getAll = asyncHandler(
       .json({
         success: true,
 
-        data: result.tasks,
+        data: result.data,
 
         pagination:
           result.pagination,
@@ -56,7 +56,8 @@ exports.getOne = asyncHandler(
   async (req, res) => {
     const task =
       await taskService.getTaskById(
-        req.params.task_id
+        req.params.task_id,
+        req
       );
 
     res
@@ -77,7 +78,8 @@ exports.update = asyncHandler(
     const task =
       await taskService.updateTask(
         req.params.task_id,
-        req.body
+        req.body,
+        req
       );
 
     res
@@ -97,7 +99,8 @@ exports.remove = asyncHandler(
   async (req, res) => {
     const result =
       await taskService.deleteTask(
-        req.params.task_id
+        req.params.task_id,
+        req
       );
 
     res

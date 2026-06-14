@@ -1,3 +1,7 @@
+/* ============================================================================
+   ACHIEVEMENT POPUP — Dark Purple/Magenta Theme
+   ============================================================================ */
+
 .achievement-popup {
   position: fixed;
   top: 24px;
@@ -8,25 +12,27 @@
   align-items: center;
   padding: 18px;
   border-radius: 22px;
-  background: rgba(15, 23, 42, 0.96);
+  background: rgba(26, 31, 58, 0.96);
   backdrop-filter: blur(12px);
   color: white;
   z-index: 99999;
   animation: popupSlide 0.35s ease;
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(233, 30, 99, 0.2);
 }
 
 .achievement-popup-icon {
   width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(156, 39, 176, 0.15));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
   flex-shrink: 0;
+  border: 1px solid rgba(233, 30, 99, 0.3);
 }
 
 .achievement-popup-label {
@@ -34,11 +40,14 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   opacity: 0.7;
+  color: var(--text-secondary);
 }
 
 .achievement-popup-content h3 {
   margin: 6px 0;
   font-size: 1.1rem;
+  color: white;
+  font-weight: 600;
 }
 
 .achievement-popup-content p {
@@ -46,6 +55,7 @@
   font-size: 14px;
   opacity: 0.85;
   line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 @keyframes popupSlide {

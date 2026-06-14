@@ -1,38 +1,63 @@
-// ─── Dependencies ─────────────────────────────────────────────────────────────
-const { Task } = require('../models');
-
 const { Op } = require('sequelize');
-
+const { Task } = require('../models');
+const { NotFoundError } = require('../utils/errors-classes.util');
+const { getRequestUserId } = require('../utils/request.util');
 const {
-  NotFoundError,
-} = require('../utils/errors-classes.util');
+  TASK_ATTRIBUTES,
+  parsePositiveInteger,
+  serializeTask,
+} = require('../utils/task.util');
 
-// ─── Create Task ──────────────────────────────────────────────────────────────
-exports.createTask = async (
-  data
-) => {
-  return await Task.create(
-    data
-  );
+const MAX_PAGE_SIZE = 100;
+
+const findUserTask = async (taskId, userId, options = {}) => {
+  const task = await Task.findOne({
+    where: {
+      task_id: taskId,
+      user_id: userId,
+    },
+    ...options,
+  });
+
+  if (!task) {
+    throw new NotFoundError('Task not found');
+  }
+
+  return task;
 };
 
-// ─── Get Tasks ────────────────────────────────────────────────────────────────
-exports.getTasks = async ({
-  page = 1,
-  limit = 10,
+exports.createTask = async (data, req) => {
+  const userId = getRequestUserId(req);
+  const payload = {
+    ...data,
+    user_id: userId,
+  };
 
-  status,
-  search,
+  if (payload.completed === true && !payload.completed_at) {
+    payload.completed_at = new Date();
+  }
 
-  sortBy = 'created_at',
-  order = 'DESC',
+  const task = await Task.create(payload);
 
-  startDate,
-  endDate,
-} = {}) => {
-  const where = {};
+  return serializeTask(task);
+};
 
-  // ─── Status Filter ─────────────────────────────────────────────────────────
+exports.getTasks = async (
+  req,
+  {
+    page = 1,
+    limit = 10,
+    status,
+    search,
+    sortBy = 'created_at',
+    order = 'DESC',
+    startDate,
+    endDate,
+  } = {}
+) => {
+  const userId = getRequestUserId(req);
+  const where = { user_id: userId };
+
   if (status === 'completed') {
     where.completed = true;
   }
@@ -41,49 +66,30 @@ exports.getTasks = async ({
     where.completed = false;
   }
 
-  // ─── Search Filter ─────────────────────────────────────────────────────────
   if (search) {
     where.title = {
       [Op.iLike]: `%${search}%`,
     };
   }
 
-  // ─── Date Range Filter ─────────────────────────────────────────────────────
+  const parsedStartDate = startDate ? new Date(startDate) : null;
+  const parsedEndDate = endDate ? new Date(endDate) : null;
+
   if (
-    startDate &&
-    endDate &&
-    !Number.isNaN(
-      new Date(startDate).getTime()
-    ) &&
-    !Number.isNaN(
-      new Date(endDate).getTime()
-    )
+    parsedStartDate &&
+    parsedEndDate &&
+    !Number.isNaN(parsedStartDate.getTime()) &&
+    !Number.isNaN(parsedEndDate.getTime())
   ) {
     where.created_at = {
-      [Op.between]: [
-        new Date(startDate),
-        new Date(endDate),
-      ],
+      [Op.between]: [parsedStartDate, parsedEndDate],
     };
   }
 
-  // ─── Safe Pagination ───────────────────────────────────────────────────────
-  const pageNumber = Math.max(
-    1,
-    Number(page) || 1
-  );
+  const pageNumber = parsePositiveInteger(page, 1);
+  const limitNumber = Math.min(parsePositiveInteger(limit, 10), MAX_PAGE_SIZE);
+  const offset = (pageNumber - 1) * limitNumber;
 
-  const limitNumber =
-    Math.max(
-      1,
-      Number(limit) || 10
-    );
-
-  const offset =
-    (pageNumber - 1) *
-    limitNumber;
-
-  // ─── Safe Sorting ──────────────────────────────────────────────────────────
   const allowedSortFields = [
     'created_at',
     'updated_at',
@@ -92,127 +98,69 @@ exports.getTasks = async ({
     'completed',
   ];
 
-  const safeSortBy =
-    allowedSortFields.includes(
-      sortBy
-    )
-      ? sortBy
-      : 'created_at';
+  const safeSortBy = allowedSortFields.includes(sortBy)
+    ? sortBy
+    : 'created_at';
 
   const safeOrder =
-    String(order).toUpperCase() ===
-    'ASC'
-      ? 'ASC'
-      : 'DESC';
+    String(order).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-  // ─── Query ─────────────────────────────────────────────────────────────────
-  const { rows, count } =
-    await Task.findAndCountAll({
-      where,
+  const { rows, count } = await Task.findAndCountAll({
+    where,
+    limit: limitNumber,
+    offset,
+    attributes: TASK_ATTRIBUTES,
+    order: [[safeSortBy, safeOrder], ['created_at', 'DESC']],
+    raw: true,
+  });
 
-      limit: limitNumber,
-
-      offset,
-
-      order: [
-        [
-          safeSortBy,
-          safeOrder,
-        ],
-
-        [
-          'created_at',
-          'DESC',
-        ],
-      ],
-    });
-
-  // ─── Return ────────────────────────────────────────────────────────────────
   return {
-    tasks: rows,
-
+    data: rows.map(serializeTask),
     pagination: {
       total: count,
-
       page: pageNumber,
-
       limit: limitNumber,
-
-      totalPages:
-        Math.ceil(
-          count /
-            limitNumber
-        ),
+      totalPages: Math.ceil(count / limitNumber),
     },
   };
 };
 
-// ─── Get Task By ID ───────────────────────────────────────────────────────────
-exports.getTaskById = async (
-  id
-) => {
-  const task =
-    await Task.findByPk(id);
+exports.getTaskById = async (taskId, req) => {
+  const userId = getRequestUserId(req);
+  const task = await findUserTask(taskId, userId, {
+    attributes: TASK_ATTRIBUTES,
+    raw: true,
+  });
 
-  if (!task) {
-    throw new NotFoundError(
-      'Task not found'
-    );
-  }
-
-  return task;
+  return serializeTask(task);
 };
 
-// ─── Update Task ──────────────────────────────────────────────────────────────
-exports.updateTask = async (
-  id,
-  data
-) => {
-  const task =
-    await Task.findByPk(id);
+exports.updateTask = async (taskId, data, req) => {
+  const userId = getRequestUserId(req);
+  const task = await findUserTask(taskId, userId);
+  const payload = { ...data };
 
-  if (!task) {
-    throw new NotFoundError(
-      'Task not found'
-    );
+  if (payload.completed === true) {
+    payload.completed_at = task.completed_at || new Date();
   }
 
-  // ─── Handle Completion ────────────────────────────────────────────────────
-  if (
-    data.completed === true
-  ) {
-    data.completed_at =
-      new Date();
+  if (payload.completed === false) {
+    payload.completed_at = null;
   }
 
-  if (
-    data.completed === false
-  ) {
-    data.completed_at = null;
-  }
+  await task.update(payload);
 
-  return await task.update(
-    data
-  );
+  return serializeTask(task);
 };
 
-// ─── Delete Task ──────────────────────────────────────────────────────────────
-exports.deleteTask = async (
-  id
-) => {
-  const task =
-    await Task.findByPk(id);
-
-  if (!task) {
-    throw new NotFoundError(
-      'Task not found'
-    );
-  }
+exports.deleteTask = async (taskId, req) => {
+  const userId = getRequestUserId(req);
+  const task = await findUserTask(taskId, userId);
 
   await task.destroy();
 
   return {
-    message:
-      'Task deleted',
+    success: true,
+    message: 'Task deleted',
   };
 };

@@ -316,29 +316,11 @@
    PRIMARY
 ========================================================= */
 
-.create-task-btn,
-.btn.primary {
-  color: white;
-
-  border-color: rgba(46, 160, 67, 0.45);
-
-  background:
-    linear-gradient(
-      135deg,
-      #238636,
-      #2ea043
-    );
-
-  box-shadow:
-    0 12px 28px rgba(46, 160, 67, 0.22);
-}
 
 .create-task-btn:hover,
 .btn.primary:hover {
   filter: brightness(1.06);
-
-  box-shadow:
-    0 16px 36px rgba(46, 160, 67, 0.3);
+  
 }
 
 /* =========================================================

@@ -20,6 +20,12 @@ class ValidationError extends AppError {
   }
 }
 
+class BadRequestError extends AppError {  
+  constructor(message = 'Bad Request') {
+    super(message, 400);
+  }
+}
+
 class UnauthorizedError extends AppError {
   constructor(message = 'Unauthorized') {
     super(message, 401);
@@ -48,6 +54,7 @@ class InternalServerError extends AppError {
 module.exports = {
   AppError,
   ValidationError,
+  BadRequestError,
   UnauthorizedError,
   ForbiddenError,
   NotFoundError,

@@ -1,42 +1,86 @@
+/* =========================================================
+   BODY LAYOUT MANAGEMENT
+========================================================= */
+
 body {
   margin: 0;
   padding-left: 272px;
-  transition: padding-left 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Collapsed state — driven by JS toggling body class */
+body.auth-page {
+  padding-left: 0 !important;
+}
+
+
 body.sidebar-collapsed {
   padding-left: 84px;
 }
+
+/* =========================================================
+   SIDEBAR HOUSING FRAME
+========================================================= */
 
 .modern-sidebar {
   position: fixed;
   top: 0;
   left: 0;
+
   width: 272px;
   height: 100vh;
+
   z-index: 1000;
+
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+
   padding: 18px 14px;
+  box-sizing: border-box;
+
   overflow-y: auto;
-  background: #0d1117;
+  overflow-x: hidden;
+
+  background: linear-gradient(180deg, #0d1117 0%, #11161d 100%);
   border-right: 1px solid #30363d;
-  contain: layout style;
+
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    8px 0 24px rgba(0, 0, 0, 0.25);
+
   will-change: width;
-  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  transition:
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    padding 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.modern-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modern-sidebar::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 999px;
 }
 
 .modern-sidebar.collapsed {
   width: 84px;
 }
 
+/* =========================================================
+   TOP BRANDING HEADER BLOCK
+========================================================= */
+
 .sidebar-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   margin-bottom: 28px;
+  height: 40px;
+
+  transition: all 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .logo-wrapper {
@@ -49,174 +93,660 @@ body.sidebar-collapsed {
 .logo-circle {
   width: 40px;
   height: 40px;
+
   border-radius: 12px;
   background: linear-gradient(135deg, #238636, #2ea043);
-  color: white;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  color: white;
   flex-shrink: 0;
-  font-size: 17px;
+
+  font-size: 16px;
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition: background 160ms ease, border-color 160ms ease;
+
+  box-shadow: 0 8px 20px rgba(35, 134, 54, 0.25);
+  transition: transform 260ms ease;
+}
+
+.logo-circle:hover {
+  transform: translateY(-1px);
 }
 
 .logo-wrapper h2 {
   margin: 0;
   color: #f0f6fc;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   white-space: nowrap;
-  transition: opacity 140ms ease;
 }
 
 .logo-wrapper p {
   margin: 2px 0 0;
   color: #7d8590;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
-  transition: opacity 140ms ease;
 }
 
+/* =========================================================
+   COLLAPSE TRIGGER MECHANICAL INTERFACE BUTTON
+========================================================= */
+
 .collapse-btn {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+
   border-radius: 10px;
   border: 1px solid #30363d;
-  background: transparent;
+  background: #161b22;
   color: #8b949e;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+
+  transition:
+    background 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    transform 220ms ease;
 }
 
 .collapse-btn:hover {
-  background: #161b22;
+  background: #21262d;
+  color: #f0f6fc;
   border-color: #484f58;
-  color: #e6edf3;
+  transform: translateY(-1px);
 }
+
+/* =========================================================
+   NAVIGATION DIRECTORY MENU LIST
+========================================================= */
 
 .sidebar-menu {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
 }
 
 .sidebar-item {
   position: relative;
-  height: 42px;
+
+  width: 100%;
+  height: 44px;
+
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
+
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: 12px;
-  padding: 0 12px;
-  overflow: hidden;
+
+  padding: 0 14px;
+  box-sizing: border-box;
+
   cursor: pointer;
   color: #8b949e;
+
   font-size: 14px;
-  font-weight: 500;
-  width: 100%;
-  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, padding 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    border-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+
+  width: 3px;
+  border-radius: 999px;
+  background: transparent;
+
+  transition: background-color 220ms ease;
 }
 
 .sidebar-item:hover {
   background: #161b22;
+  color: #f0f6fc;
   border-color: #21262d;
-  color: #e6edf3;
+  transform: translateX(2px);
 }
 
 .sidebar-item.active {
-  background: #21262d;
-  border-color: #30363d;
+  background: #1b2430;
   color: #f0f6fc;
+  border-color: #30363d;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-item.active::before {
+  background: #2f81f7;
 }
 
 .sidebar-icon {
+  width: 20px;
+  height: 20px;
+
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  transition: color 150ms ease;
+
+  transition: transform 220ms ease;
 }
 
 .sidebar-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 19px;
+  height: 19px;
+}
+
+.sidebar-item:hover .sidebar-icon {
+  transform: scale(1.05);
 }
 
 .sidebar-label {
   white-space: nowrap;
   overflow: hidden;
-  font-size: 15px;
-  transition: opacity 150ms ease, width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  text-overflow: ellipsis;
 }
 
+/* =========================================================
+   ASYNCHRONOUS COLLAPSED FLOAT-OUT TOOLTIPS
+========================================================= */
+
+.tooltip-text {
+  position: absolute;
+  left: 62px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #f0f6fc;
+
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 1050;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-item:hover .tooltip-text {
+  opacity: 1;
+  transform: translateY(-50%) translateX(4px);
+}
+
+.modern-sidebar:not(.collapsed) .tooltip-text {
+  display: none;
+}
+
+/* =========================================================
+   BOTTOM PROMO CARD CONTEXT
+========================================================= */
+
 .sidebar-bottom {
-  margin-top: 18px;
+  margin-top: 20px;
+  margin-bottom: 12px;
 }
 
 .upgrade-card {
+  padding: 14px;
+  border-radius: 12px;
   background: linear-gradient(180deg, #161b22, #0d1117);
   border: 1px solid #30363d;
-  border-radius: 14px;
-  padding: 16px;
-  overflow: hidden;
-  color: #e6edf3;
-  transition: border-color 160ms ease, background 160ms ease;
-}
-
-.upgrade-card:hover {
-  border-color: #484f58;
-  background: linear-gradient(180deg, #1c2128, #0d1117);
 }
 
 .upgrade-card h4 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   color: #f0f6fc;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .upgrade-card p {
   margin: 0;
   color: #8b949e;
-  line-height: 1.5;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.4;
 }
+
+/* =========================================================
+   PRO PROFILE FOOTER ARCHITECTURE
+========================================================= */
+
+.sidebar-footer {
+  position: relative;
+  width: 100%;
+  padding: 8px 0 0 0;
+  margin-top: auto; /* Forces system down to bottom */
+}
+
+/* Base Override over generic items styles */
+.profile-btn {
+  display: flex;
+  align-items: center;
+  width: 100% !important;
+  height: 48px !important;
+  padding: 0 12px !important;
+  background: transparent;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+}
+
+.profile-btn:hover {
+  background-color: #161b22 !important;
+  border-color: #21262d !important;
+  transform: none !important; /* Locks structural translations */
+}
+
+.profile-btn.active {
+  background-color: #1b2430 !important;
+  border-color: #30363d !important;
+}
+
+.profile-btn-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding-left: 4px;
+}
+
+.profile-btn-username {
+  font-size: 13.5px;
+  font-weight: 550;
+  color: #f0f6fc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-mini-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #30363d 0%, #21262d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #c9d1d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Micro Interactivity Animation Hooks */
+.chevron-icon {
+  color: #8b949e;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms ease;
+}
+
+.profile-btn:hover .chevron-icon {
+  color: #f0f6fc;
+}
+
+.chevron-icon.expanded {
+  transform: rotate(180deg);
+}
+
+/* =========================================================
+   PRO EXPANDED PANEL CARD OVERLAY WITH FORMS
+========================================================= */
+
+.profile-dropdown {
+  position: absolute;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  padding: 0;
+  z-index: 1001;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.2),
+    0 12px 32px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: dropdownSlideUp 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dropdownSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.profile-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.profile-dropdown::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 3px;
+}
+
+.profile-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #484f58;
+}
+
+/* =========================================================
+   COLLAPSED PROFILE FLOATING DROPDOWN MODIFIER
+========================================================= */
+
+.profile-dropdown.is-floating {
+  position: fixed;
+  bottom: 16px;
+  left: 92px; /* Places it cleanly next to the collapsed sidebar edge (84px + padding) */
+  right: auto;
+  top: auto;
+  width: 240px;
+  max-height: 85vh;
+  margin-bottom: 0;
+  transform: none;
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    4px 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Adjust the edge-to-edge divider line to scale cleanly with the explicit width constraint */
+.profile-dropdown.is-floating .profile-dropdown-divider {
+  margin: 12px -14px;
+}
+
+/* =========================================================
+   PROFILE DROPDOWN CONTENT STRUCTURE
+========================================================= */
+
+.profile-dropdown-content {
+  padding: 16px 0;
+}
+
+.profile-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+
+.profile-dropdown-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(35, 134, 54, 0.2);
+  flex-shrink: 0;
+}
+
+.profile-dropdown-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-dropdown-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0f6fc;
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-email {
+  font-size: 12px;
+  color: #8b949e;
+  margin: 4px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-dropdown-divider {
+  height: 1px;
+  background-color: #30363d;
+  margin: 12px 0;
+}
+
+/* =========================================================
+   ALERT MESSAGES IN DROPDOWN
+========================================================= */
+
+.alert-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 0 16px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+.alert-success {
+  background-color: rgba(35, 134, 54, 0.15);
+  color: #3fb950;
+  border: 1px solid rgba(35, 134, 54, 0.3);
+}
+
+.alert-error {
+  background-color: rgba(248, 81, 73, 0.15);
+  color: #f85149;
+  border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+.alert-compact svg {
+  flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+
+/* ——— Settings Button ——— */
+.profile-settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #2f81f7;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.profile-settings-btn:hover {
+  background-color: rgba(47, 129, 247, 0.08);
+  border-color: rgba(47, 129, 247, 0.15);
+}
+
+.profile-settings-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ——— Logout Button ——— */
+.profile-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #f85149;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 12px 0 0;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.profile-logout-btn:hover {
+  background-color: rgba(248, 81, 73, 0.08);
+  border-color: rgba(248, 81, 73, 0.15);
+}
+
+.profile-logout-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* =========================================================
+   PROFILE DROPDOWN BUTTONS (SETTINGS + LOGOUT)
+========================================================= */
+
+/* ——— Settings Button ——— */
+.profile-settings-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #2f81f7;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.profile-settings-btn:hover {
+  background-color: rgba(47, 129, 247, 0.08);
+  border-color: rgba(47, 129, 247, 0.15);
+}
+
+.profile-settings-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ——— Logout Button ——— */
+
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 16px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #30363d;
+  border-top-color: #2f81f7;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.profile-loading p {
+  font-size: 13px;
+  color: #8b949e;
+  margin: 0;
+}
+
+.profile-error {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.profile-error p {
+  margin: 0;
+  font-size: 13px;
+  color: #8b949e;
+}
+
+/* =========================================================
+   COLLAPSED SPECIFIC STRUCTURAL RE-SHAPING RULES
+========================================================= */
 
 .modern-sidebar.collapsed .logo-wrapper {
   justify-content: center;
+  width: 100%;
 }
 
 .modern-sidebar.collapsed .sidebar-item {
   justify-content: center;
-  padding: 0 0;
-  gap: 0;
+  padding: 0;
 }
 
-.modern-sidebar.collapsed .sidebar-icon {
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.modern-sidebar.collapsed .sidebar-item:hover {
+  transform: none; /* Disables slide shift when collapsed */
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE DESIGN SYSTEM MEDIA QUERIES
 ========================================================= */
 
 @media (max-width: 1024px) {
@@ -232,24 +762,25 @@ body.sidebar-collapsed {
 }
 
 @media (max-width: 768px) {
-  .modern-sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 1000;
-    width: 260px;
-  }
   body {
     padding-left: 0;
   }
   body.sidebar-collapsed {
     padding-left: 0;
   }
+  .modern-sidebar {
+    width: 260px;
+  }
   .modern-sidebar.collapsed {
     width: 0;
     padding-left: 0;
     padding-right: 0;
-    overflow: hidden;
     border-right: none;
+    overflow: hidden;
+  }
+  
+  .profile-dropdown.is-floating {
+    width: calc(100vw - 32px);
+    max-height: 80vh;
   }
 }

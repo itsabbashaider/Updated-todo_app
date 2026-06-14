@@ -1,6 +1,8 @@
-import axiosInstance from './axios-instance.service';
+import axiosInstance from "./axios-instance.service";
 
 export const getAnalytics = (range = 7) =>
-  axiosInstance.get(
-    `/analytics?range=${range}`
-  );
+  axiosInstance.get("/analytics", {
+    params: {
+      range,
+    },
+  });
