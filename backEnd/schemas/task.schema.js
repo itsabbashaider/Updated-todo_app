@@ -1,5 +1,6 @@
 // ─── Dependencies ─────────────────────────────────────────────────────────────
 const Joi = require("joi");
+const { create } = require("../controllers/task.controller");
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 // ─── Create ───────────────────────────────────────────────────────────────────
@@ -12,9 +13,7 @@ const createTodoSchema = Joi.object({
     .valid("low", "medium", "high")
     .optional()
     .default("low"),
-
-  due_date: Joi.date().allow(null).optional(),
-});
+}).unknown(true);
 
 // ─── Update ───────────────────────────────────────────────────────────────────
 const updateTodoSchema = Joi.object({

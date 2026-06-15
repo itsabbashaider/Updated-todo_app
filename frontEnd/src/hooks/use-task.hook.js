@@ -41,23 +41,19 @@ export function useTasks(filters = defaultFilters) {
 
     const performFetch = async () => {
       try {
-        console.log('📡 Fetching tasks with filters:', normalizedFilters);
         setLoading(true);
 
         const filterObj = JSON.parse(normalizedFilters);
         const res = await getTasks(filterObj);
 
         if (!isMounted) {
-          console.log('Component unmounted, skipping state update');
           return;
         }
 
-        console.log('✅ Got response:', res.data);
         setTasks(res.data.data || []);
         setPagination(res.data.pagination || {});
         setError('');
       } catch (err) {
-        console.error('❌ Fetch error:', err);
         if (!isMounted) return;
 
         setError(err.response?.data?.message || 'Failed to fetch tasks');
@@ -78,7 +74,6 @@ export function useTasks(filters = defaultFilters) {
   // ─── Add Task ──────────────────────────────────────────────────────────────
   const addTask = useCallback(
     async (taskData) => {
-      console.log('➕ Adding task:', taskData);
 
       const validation = validateTaskInput(taskData);
       if (!validation.isValid) {
@@ -90,7 +85,7 @@ export function useTasks(filters = defaultFilters) {
         ...taskData,
         task_id: crypto.randomUUID(),
         completed: taskData.completed ?? false,
-        created_at: new Date().toISOString(),
+        created_at: taskData.created_at || new Date().toISOString(),  
       };
 
       setTasks((prev) => [optimisticTask, ...prev]);
@@ -99,7 +94,6 @@ export function useTasks(filters = defaultFilters) {
         const res = await createTask(taskData);
         const savedTask = res.data.task || res.data.data;
 
-        console.log('✅ Task created:', savedTask);
 
         setTasks((prev) =>
           prev.map((task) =>
@@ -109,7 +103,6 @@ export function useTasks(filters = defaultFilters) {
 
         setError('');
       } catch (err) {
-        console.error('❌ Create task error:', err);
         setTasks((prev) =>
           prev.filter((task) => task.task_id !== optimisticTask.task_id)
         );
@@ -122,7 +115,6 @@ export function useTasks(filters = defaultFilters) {
   // ─── Update Task ──────────────────────────────────────────────────────────
   const updateTaskData = useCallback(
     async (taskId, data) => {
-      console.log('✏️ Updating task:', taskId, data);
 
       if (data.title !== undefined) {
         const currentTask = tasks.find((t) => t.task_id === taskId);
@@ -143,10 +135,8 @@ export function useTasks(filters = defaultFilters) {
 
       try {
         await updateTask(taskId, data);
-        console.log('✅ Task updated');
         setError('');
       } catch (err) {
-        console.error('❌ Update error:', err);
         setTasks(previousTasks);
         setError(err.response?.data?.message || 'Failed to update task');
       }
@@ -157,17 +147,14 @@ export function useTasks(filters = defaultFilters) {
   // ─── Remove Task ──────────────────────────────────────────────────────────
   const removeTask = useCallback(
     async (taskId) => {
-      console.log('🗑️ Deleting task:', taskId);
 
       const previousTasks = [...tasks];
       setTasks((prev) => prev.filter((task) => task.task_id !== taskId));
 
       try {
         await deleteTask(taskId);
-        console.log('✅ Task deleted');
         setError('');
       } catch (err) {
-        console.error('❌ Delete error:', err);
         setTasks(previousTasks);
         setError(err.response?.data?.message || 'Failed to delete task');
       }
@@ -178,7 +165,6 @@ export function useTasks(filters = defaultFilters) {
   // ─── Toggle Task ──────────────────────────────────────────────────────────
   const toggleTask = useCallback(
     async (task) => {
-      console.log('🔄 Toggling task:', task.task_id);
 
       const previousTasks = [...tasks];
 
@@ -192,10 +178,8 @@ export function useTasks(filters = defaultFilters) {
 
       try {
         await updateTask(task.task_id, { completed: !task.completed });
-        console.log('✅ Task toggled');
         setError('');
       } catch (err) {
-        console.error('❌ Toggle error:', err);
         setTasks(previousTasks);
         setError(err.response?.data?.message || 'Failed to toggle task');
       }
@@ -208,7 +192,6 @@ export function useTasks(filters = defaultFilters) {
 
   // ─── Refetch ────────────────────────────────────────────────────────────────
   const refetch = useCallback(() => {
-    console.log('🔄 Refetching tasks');
     setLoading(true);
 
     const filterObj = JSON.parse(normalizedFilters);
@@ -219,7 +202,6 @@ export function useTasks(filters = defaultFilters) {
         setError('');
       })
       .catch((err) => {
-        console.error('❌ Refetch error:', err);
         setError(err.response?.data?.message || 'Failed to fetch tasks');
       })
       .finally(() => {

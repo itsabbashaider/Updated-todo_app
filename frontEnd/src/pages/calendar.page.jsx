@@ -1,6 +1,11 @@
-import { useState } from 'react';
+import {
+  useState,
+  useMemo,
+  useCallback,
+} from 'react';
+
 import Sidebar from '../components/layouts/sidebar.component';
-import { useCalendarPage } from '../hooks/use-calendar.hook';
+import { useTasks } from '../hooks/use-task.hook';
 import CreateModal from '../components/modals/create-tasks-modal.component';
 import EditModal from '../components/modals/edit-tasks-modal.component';
 import TaskDetailModal from '../components/modals/task-details-modal.component';
@@ -13,64 +18,105 @@ import {
 } from 'react-icons/fa';
 
 function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const [detailTask, setDetailTask] = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [currentDate, setCurrentDate]     = useState(new Date());
+  const [selectedDate, setSelectedDate]   = useState(new Date());
+  const [isCreateOpen, setIsCreateOpen]   = useState(false);
+  const [editingTask, setEditingTask]     = useState(null);
+  const [detailTask, setDetailTask]       = useState(null);
+  const [confirmOpen, setConfirmOpen]     = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
 
-  const {
-    tasks,
-    loading,
-    addTask,
-    removeTask,
-    toggleTask,
-    updateTaskData,
-    normalizeDate,
-    normalizeTaskDate,
-    isSameDay,
-    getPriorityValue,
-    today,
-    isPastDate,
-    isCurrentWeekDay,
-  } = useCalendarPage(currentDate);
+  const filters = useMemo(() => {
+    const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const monthEnd   = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
+    return {
+      startDate: monthStart.toISOString(),
+      endDate:   monthEnd.toISOString(),
+      limit:     500,
+    };
+  }, [currentDate]);
 
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
+  const { tasks, loading, addTask, removeTask, toggleTask, updateTaskData } = useTasks(filters);
+
+  const normalizeDate = useCallback((date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  }, []);
+
+  const normalizeTaskDate = useCallback((task) => {
+    const dateString = task.created_at || task.createdAt || task.updated_at || task.updatedAt;
+    if (!dateString) return new Date(0);
+    return normalizeDate(new Date(dateString));
+  }, [normalizeDate]);
+
+  const isSameDay = useCallback((date1, date2) => {
+    return normalizeDate(date1).getTime() === normalizeDate(date2).getTime();
+  }, [normalizeDate]);
+
+  const getPriorityValue = useCallback((priority) => {
+    const value = String(priority).toLowerCase();
+    if (value === 'high') return 1;
+    if (value === 'medium' || value === 'mid') return 2;
+    return 3;
+  }, []);
+
+  const today = useMemo(() => normalizeDate(new Date()), [normalizeDate]);
+
+  const isPastDate = useCallback((date) => {
+    return normalizeDate(date).getTime() < today.getTime();
+  }, [normalizeDate, today]);
+
+  const getCurrentWeekRange = useCallback(() => {
+    const todayDate = new Date();
+    const day       = todayDate.getDay();
+    const diff      = todayDate.getDate() - day;
+    const weekStart = new Date(todayDate.getFullYear(), todayDate.getMonth(), diff);
+    const weekEnd   = new Date(todayDate.getFullYear(), todayDate.getMonth(), diff + 6);
+    return { start: normalizeDate(weekStart), end: normalizeDate(weekEnd) };
+  }, [normalizeDate]);
+
+  const currentWeek = useMemo(() => getCurrentWeekRange(), [getCurrentWeekRange]);
+
+  const isCurrentWeekDay = useCallback((date) => {
+    const normalized = normalizeDate(date);
+    return normalized.getTime() >= currentWeek.start.getTime() && normalized.getTime() <= currentWeek.end.getTime();
+  }, [normalizeDate, currentWeek]);
+
+  const currentMonth    = currentDate.getMonth();
+  const currentYear     = currentDate.getFullYear();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-  const startDay = firstDayOfMonth.getDay();
-  const totalDays = lastDayOfMonth.getDate();
-  const monthName = currentDate.toLocaleString('default', { month: 'long' });
+  const lastDayOfMonth  = new Date(currentYear, currentMonth + 1, 0);
+  const startDay        = firstDayOfMonth.getDay();
+  const totalDays       = lastDayOfMonth.getDate();
+  const monthName       = currentDate.toLocaleString('default', { month: 'long' });
 
-  const calendarDays = Array.from({ length: startDay }, () => null).concat(
-    Array.from({ length: totalDays }, (_, i) => new Date(currentYear, currentMonth, i + 1))
-  );
+  const calendarDays = useMemo(() => {
+    const days = [];
+    for (let i = 0; i < startDay; i++) days.push(null);
+    for (let day = 1; day <= totalDays; day++) days.push(new Date(currentYear, currentMonth, day));
+    return days;
+  }, [startDay, totalDays, currentMonth, currentYear]);
 
-  const selectedTasks = tasks
-    .filter((task) => isSameDay(normalizeTaskDate(task), selectedDate))
-    .sort((a, b) => {
-      if (a.completed !== b.completed) return a.completed ? 1 : -1;
-      const priorityCompare = getPriorityValue(a.priority) - getPriorityValue(b.priority);
-      if (priorityCompare !== 0) return priorityCompare;
-      return normalizeTaskDate(b) - normalizeTaskDate(a);
-    });
+  const selectedTasks = useMemo(() => {
+    return tasks
+      .filter((task) => isSameDay(normalizeTaskDate(task), selectedDate))
+      .sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        const priorityCompare = getPriorityValue(a.priority) - getPriorityValue(b.priority);
+        if (priorityCompare !== 0) return priorityCompare;
+        return normalizeTaskDate(b) - normalizeTaskDate(a);
+      });
+  }, [tasks, selectedDate, isSameDay, normalizeTaskDate, getPriorityValue]);
 
-  const upcomingTasks = tasks
-    .filter((task) => normalizeTaskDate(task) > today && !task.completed)
-    .sort((a, b) => normalizeTaskDate(a) - normalizeTaskDate(b));
+  const upcomingTasks = useMemo(() => {
+    return tasks
+      .filter((task) => normalizeTaskDate(task) > today && !task.completed)
+      .sort((a, b) => normalizeTaskDate(a) - normalizeTaskDate(b));
+  }, [tasks, normalizeTaskDate, today]);
 
-  if (loading) {
-    return (
-      <div className="calendar-layout">
-        <Sidebar />
-        <CalendarSkeleton />
-      </div>
-    );
-  }
+  if (loading) return <div className="calendar-layout"><Sidebar /><CalendarSkeleton /></div>;
 
   const askConfirm = (message, action) => {
     setConfirmMessage(message);
@@ -94,11 +140,11 @@ function CalendarPage() {
     const taskDate = normalizeDate(selectedDate);
     const safeDate = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate(), 12, 0, 0);
     await addTask({
-      title: taskData.title?.trim(),
+      title:       taskData.title?.trim(),
       description: taskData.description?.trim(),
-      priority: String(taskData.priority).toLowerCase(),
-      completed: false,
-      created_at: safeDate.toISOString(),
+      priority:    String(taskData.priority).toLowerCase(),
+      completed:   false,
+      created_at:  safeDate.toISOString(),
     });
     setIsCreateOpen(false);
   };
@@ -111,24 +157,18 @@ function CalendarPage() {
   const onToggle = async (task) => {
     const taskDate = normalizeTaskDate(task);
     if (task.completed) {
-      askConfirm('Are you sure you want to undo this completed task?', async () => {
-        await toggleTask(task);
-      });
+      askConfirm('Are you sure you want to undo this completed task?', async () => { await toggleTask(task); });
       return;
     }
     if (taskDate > today) {
-      askConfirm('This task is scheduled for a future date. Mark it as completed anyway?', async () => {
-        await toggleTask(task);
-      });
+      askConfirm('This task is scheduled for a future date. Mark it as completed anyway?', async () => { await toggleTask(task); });
       return;
     }
     await toggleTask(task);
   };
 
   const onDelete = (task) => {
-    askConfirm('Are you sure you want to delete this task?', async () => {
-      await removeTask(task.task_id);
-    });
+    askConfirm('Are you sure you want to delete this task?', async () => { await removeTask(task.task_id); });
   };
 
   const onEdit = (task) => {
@@ -192,18 +232,18 @@ function CalendarPage() {
           </div>
 
           <div className="calendar-weekdays">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
+            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => <div key={d}>{d}</div>)}
           </div>
 
           <div className="calendar-grid">
             {calendarDays.map((date, index) => {
               if (!date) return <div key={index} className="calendar-empty" />;
 
-              const tasksForDay = tasks.filter((task) => isSameDay(normalizeTaskDate(task), date));
-              const taskCount = tasksForDay.length;
-              const isSelected = isSameDay(date, selectedDate);
-              const isToday = isSameDay(date, new Date());
-              const isPastDay = isPastDate(date);
+              const tasksForDay  = tasks.filter((task) => isSameDay(normalizeTaskDate(task), date));
+              const taskCount    = tasksForDay.length;
+              const isSelected   = isSameDay(date, selectedDate);
+              const isToday      = isSameDay(date, new Date());
+              const isPastDay    = isPastDate(date);
               const isCurrentWeek = isCurrentWeekDay(date);
 
               return (
@@ -227,15 +267,12 @@ function CalendarPage() {
                   </div>
 
                   {!isPastDay && (
-                    <button
-                      type="button"
-                      className="calendar-add-btn"
+                    <button type="button" className="calendar-add-btn"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedDate(new Date(date));
                         setTimeout(() => setIsCreateOpen(true), 0);
-                      }}
-                    >
+                      }}>
                       <FaPlus />
                     </button>
                   )}
