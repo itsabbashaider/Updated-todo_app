@@ -14,7 +14,6 @@ import {
 
 import { 
   formatTaskDate,
-  isTaskScheduledForFuture,
 } from '../utils/date.util.js';
 
 import {
@@ -47,6 +46,21 @@ function TasksPage() {
     updateTaskData,
     refetch,
   } = useTasksPage(search);
+
+  // Utility functions for date normalization (same as CalendarPage)
+  const normalizeDate = (date) => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
+  const normalizeTaskDate = (task) => {
+    const dateString = task.created_at || task.createdAt || task.updated_at || task.updatedAt;
+    if (!dateString) return new Date(0);
+    return normalizeDate(new Date(dateString));
+  };
+
+  const today = normalizeDate(new Date());
 
   // Task Actions Handlers
   const handleCreateTask = async (taskData) => {
@@ -94,7 +108,8 @@ function TasksPage() {
       return;
     }
 
-    if (isTaskScheduledForFuture(task)) {
+    const taskDate = normalizeTaskDate(task);
+    if (taskDate > today) {
       askConfirm('This task is scheduled for a future date. Mark it as completed anyway?', async () => {
         await toggleTask(task);
       });
@@ -240,7 +255,6 @@ function TasksPage() {
                 onClick={() => setIsCreateOpen(true)}
               >
                 <FaPlus />
-                <span>New Task</span>
               </button>
             </div>
           </div>
