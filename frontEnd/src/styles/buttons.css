@@ -128,6 +128,8 @@
 .btn.success {
   color: var(--success-text);
 
+  width: 97px;
+
   background: var(--success-bg);
 
   border-color: var(--success-border);
@@ -135,6 +137,7 @@
 
 .btn.success:hover:not(:disabled) {
   background: var(--success-bg-strong);
+
 
   border-color: var(--success-border-strong);
 }

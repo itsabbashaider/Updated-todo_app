@@ -1,20 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import Sidebar from '../components/layouts/sidebar.component';
-import { useProfile } from '../hooks/use-profile.hook';
-import { useProfileRefresh } from '../contexts/profile.context';
+import { useProfile, useUpdateProfile, useChangePassword } from '../hooks/use-profile.hook';
 import SecurityQuestionsForm from '../components/authentication/security-questions-form.component';
-import {
-  updateProfile,
-  changePassword,
-} from '../services/auth.service';
-import { getErrorMessage } from '../utils/error-handler.util';
 
-// ==========================================
-// 1. MAIN PARENT PAGE COMPONENT
-// ==========================================
 function SettingsPage() {
-  const { user, mutate } = useProfile();
-  const { triggerRefresh } = useProfileRefresh();
+  const { user } = useProfile();
   const [activeSection, setActiveSection] = useState('profile');
 
   if (!user) {
@@ -40,7 +30,6 @@ function SettingsPage() {
           <p>Manage your account and preferences</p>
         </div>
 
-        {/* Navigation Section */}
         <div className="settings-nav">
           <div className="nav-container">
             <button
@@ -73,28 +62,18 @@ function SettingsPage() {
         </div>
 
         <div className="settings-wrapper">
-          {/* Profile Section */}
           {activeSection === 'profile' && (
             <div className="settings-section-view">
-              <ProfileForm
-                key={user.email || 'profile-form'}
-                user={user}
-                onRefreshProfile={() => {
-                  mutate();
-                  triggerRefresh();
-                }}
-              />
+              <ProfileForm key="profile-form" user={user} />
             </div>
           )}
 
-          {/* Password Section */}
           {activeSection === 'password' && (
             <div className="settings-section-view">
               <PasswordForm />
             </div>
           )}
 
-          {/* Security Questions Section */}
           {activeSection === 'security' && (
             <div className="settings-section-view">
               <SecurityQuestionsForm />
@@ -106,31 +85,20 @@ function SettingsPage() {
   );
 }
 
-// ==========================================
-// 2. CHILD PROFILE FORM COMPONENT
-// ==========================================
-function ProfileForm({ user, onRefreshProfile }) {
-  const profileTimeoutRef = useRef(null);
+function ProfileForm({ user }) {
+  const { updateProfile, isLoading, message } = useUpdateProfile();
 
   const [profile, setProfile] = useState({
-    firstName: user.firstName || '',
-    lastName: user.lastName || '',
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
     email: user.email || '',
   });
 
   const [profileErrors, setProfileErrors] = useState({});
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileMessage, setProfileMessage] = useState('');
-
-  useEffect(() => {
-    return () => {
-      if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
-    };
-  }, []);
 
   const profileHasChanges =
-    profile.firstName !== (user.firstName || '') ||
-    profile.lastName !== (user.lastName || '') ||
+    profile.first_name !== (user.first_name || '') ||
+    profile.last_name !== (user.last_name || '') ||
     profile.email !== (user.email || '');
 
   const handleProfileChange = (e) => {
@@ -147,22 +115,22 @@ function ProfileForm({ user, onRefreshProfile }) {
 
   const validateProfile = () => {
     const errors = {};
-    const firstNameValue = profile.firstName.trim();
-    const lastNameValue = profile.lastName.trim();
+    const firstNameValue = profile.first_name.trim();
+    const lastNameValue = profile.last_name.trim();
     const emailValue = profile.email.trim().toLowerCase();
 
     const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ\s'-]{1,49}$/;
 
     if (!firstNameValue) {
-      errors.firstName = 'First name required';
+      errors.first_name = 'First name required';
     } else if (!nameRegex.test(firstNameValue)) {
-      errors.firstName = 'Invalid name format. Use 2+ letters; no numbers or special characters allowed.';
+      errors.first_name = 'Invalid name format. Use 2+ letters; no numbers or special characters allowed.';
     }
 
     if (!lastNameValue) {
-      errors.lastName = 'Last name required';
+      errors.last_name = 'Last name required';
     } else if (!nameRegex.test(lastNameValue)) {
-      errors.lastName = 'Invalid name format. Use 2+ letters; no numbers or special characters allowed.';
+      errors.last_name = 'Invalid name format. Use 2+ letters; no numbers or special characters allowed.';
     }
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -176,7 +144,7 @@ function ProfileForm({ user, onRefreshProfile }) {
     return errors;
   };
 
-  const handleProfileSave = async (e) => {
+  const handleProfileSave = (e) => {
     e.preventDefault();
     const errors = validateProfile();
 
@@ -185,43 +153,20 @@ function ProfileForm({ user, onRefreshProfile }) {
       return;
     }
 
-    setProfileLoading(true);
-    setProfileMessage('');
-    if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
-
-    try {
-      // ✅ USE SERVICE INSTEAD OF FETCH
-      await updateProfile({
-        firstName: profile.firstName.trim(),
-        lastName: profile.lastName.trim(),
-        email: profile.email.trim(),
-      });
-
-      setProfileMessage('Changes saved successfully');
-
-      if (typeof onRefreshProfile === 'function') {
-        await onRefreshProfile();
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-
-      profileTimeoutRef.current = setTimeout(() => setProfileMessage(''), 4000);
-    } catch (error) {
-      const errorMsg = getErrorMessage(error);
-      setProfileMessage(`Error: ${errorMsg}`);
-    } finally {
-      setProfileLoading(false);
-    }
+    updateProfile({
+      firstName: profile.first_name.trim(),
+      lastName: profile.last_name.trim(),
+      email: profile.email.trim(),
+    });
   };
 
   const handleProfileCancel = () => {
     setProfile({
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
       email: user.email || '',
     });
     setProfileErrors({});
-    setProfileMessage('');
-    if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
   };
 
   return (
@@ -234,34 +179,34 @@ function ProfileForm({ user, onRefreshProfile }) {
       <form onSubmit={handleProfileSave} className="settings-form">
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="firstName">First Name</label>
+            <label htmlFor="first_name">First Name</label>
             <input
-              id="firstName"
+              id="first_name"
               type="text"
-              name="firstName"
-              value={profile.firstName}
+              name="first_name"
+              value={profile.first_name}
               onChange={handleProfileChange}
-              disabled={profileLoading}
-              className={profileErrors.firstName ? 'error' : ''}
+              disabled={isLoading}
+              className={profileErrors.first_name ? 'error' : ''}
             />
-            {profileErrors.firstName && (
-              <span className="error-message">{profileErrors.firstName}</span>
+            {profileErrors.first_name && (
+              <span className="error-message">{profileErrors.first_name}</span>
             )}
           </div>
 
           <div className="form-group">
-            <label htmlFor="lastName">Last Name</label>
+            <label htmlFor="last_name">Last Name</label>
             <input
-              id="lastName"
+              id="last_name"
               type="text"
-              name="lastName"
-              value={profile.lastName}
+              name="last_name"
+              value={profile.last_name}
               onChange={handleProfileChange}
-              disabled={profileLoading}
-              className={profileErrors.lastName ? 'error' : ''}
+              disabled={isLoading}
+              className={profileErrors.last_name ? 'error' : ''}
             />
-            {profileErrors.lastName && (
-              <span className="error-message">{profileErrors.lastName}</span>
+            {profileErrors.last_name && (
+              <span className="error-message">{profileErrors.last_name}</span>
             )}
           </div>
         </div>
@@ -274,7 +219,7 @@ function ProfileForm({ user, onRefreshProfile }) {
             name="email"
             value={profile.email}
             onChange={handleProfileChange}
-            disabled={profileLoading}
+            disabled={isLoading}
             className={profileErrors.email ? 'error' : ''}
           />
           {profileErrors.email && (
@@ -282,26 +227,28 @@ function ProfileForm({ user, onRefreshProfile }) {
           )}
         </div>
 
-        {profileMessage && (
-          <div className={`message ${profileMessage.startsWith('Error') ? 'error-message-box' : 'success-message'}`}>
-            {profileMessage}
+        {message && (
+          <div className={`message ${message.startsWith('Error') ? 'error-message-box' : 'success-message'}`}>
+            {message}
           </div>
         )}
 
-        <div className="form-actions">
+        <div className="form-actions" style={{ display: 'flex', alignItems: 'stretch', gap: '12px' }}>
           <button
             type="submit"
-            disabled={!profileHasChanges || profileLoading}
+            disabled={!profileHasChanges || isLoading}
             className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '46px' }}
           >
-            {profileLoading ? 'Saving...' : 'Save Changes'}
+            {isLoading ? 'Saving...' : 'Save Changes'}
           </button>
           {profileHasChanges && (
             <button
               type="button"
               onClick={handleProfileCancel}
-              disabled={profileLoading}
+              disabled={isLoading}
               className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '46px' }}
             >
               Cancel
             </button>
@@ -312,28 +259,17 @@ function ProfileForm({ user, onRefreshProfile }) {
   );
 }
 
-// ==========================================
-// 3. CHILD PASSWORD FORM COMPONENT
-// ==========================================
 function PasswordForm() {
-  const passwordTimeoutRef = useRef(null);
+  const { changePassword, isLoading, message } = useChangePassword();
 
   const [password, setPassword] = useState({
-    current: '',
-    new: '',
-    confirm: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
   const [passwordErrors, setPasswordErrors] = useState({});
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState('');
 
-  useEffect(() => {
-    return () => {
-      if (passwordTimeoutRef.current) clearTimeout(passwordTimeoutRef.current);
-    };
-  }, []);
-
-  const passwordHasValues = !!(password.current || password.new || password.confirm);
+  const passwordHasValues = !!(password.currentPassword || password.newPassword || password.confirmPassword);
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -349,25 +285,25 @@ function PasswordForm() {
 
   const validatePassword = () => {
     const errors = {};
-    if (!password.current) errors.current = 'Current password required';
-    if (!password.new) {
-      errors.new = 'Password is required';
-    } else if (password.new.length < 8) {
-      errors.new = 'Password must be at least 8 characters';
-    } else if ((password.new.match(/[A-Za-z]/g) || []).length < 2) {
-      errors.new = 'Password must contain at least 2 letters';
-    } else if ((password.new.match(/\d/g) || []).length < 2) {
-      errors.new = 'Password must contain at least 2 numbers';
+    if (!password.currentPassword) errors.currentPassword = 'Current password required';
+    if (!password.newPassword) {
+      errors.newPassword = 'Password is required';
+    } else if (password.newPassword.length < 8) {
+      errors.newPassword = 'Password must be at least 8 characters';
+    } else if ((password.newPassword.match(/[A-Za-z]/g) || []).length < 2) {
+      errors.newPassword = 'Password must contain at least 2 letters';
+    } else if ((password.newPassword.match(/\d/g) || []).length < 2) {
+      errors.newPassword = 'Password must contain at least 2 numbers';
     }
 
-    if (password.new !== password.confirm) {
-      errors.confirm = 'Passwords do not match';
+    if (password.newPassword !== password.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
     }
     return errors;
   };
 
   const getPasswordStrength = () => {
-    const pwd = password.new;
+    const pwd = password.newPassword;
     const checks = {
       length: pwd.length >= 8,
       letters: (pwd.match(/[A-Za-z]/g) || []).length >= 2,
@@ -378,7 +314,7 @@ function PasswordForm() {
 
   const strength = getPasswordStrength();
 
-  const handlePasswordSave = async (e) => {
+  const handlePasswordSave = (e) => {
     e.preventDefault();
     const errors = validatePassword();
     if (Object.keys(errors).length > 0) {
@@ -386,30 +322,15 @@ function PasswordForm() {
       return;
     }
 
-    setPasswordLoading(true);
-    setPasswordMessage('');
-    if (passwordTimeoutRef.current) clearTimeout(passwordTimeoutRef.current);
-
-    try {
-      // ✅ USE SERVICE INSTEAD OF FETCH
-      await changePassword(password.current, password.new);
-
-      setPassword({ current: '', new: '', confirm: '' });
-      setPasswordMessage('Password changed successfully');
-      passwordTimeoutRef.current = setTimeout(() => setPasswordMessage(''), 4000);
-    } catch (error) {
-      const errorMsg = getErrorMessage(error);
-      setPasswordMessage(`Error: ${errorMsg}`);
-    } finally {
-      setPasswordLoading(false);
-    }
+    changePassword({
+      currentPassword: password.currentPassword,
+      newPassword: password.newPassword,
+    });
   };
 
   const handlePasswordClear = () => {
-    setPassword({ current: '', new: '', confirm: '' });
+    setPassword({ currentPassword: '', newPassword: '', confirmPassword: '' });
     setPasswordErrors({});
-    setPasswordMessage('');
-    if (passwordTimeoutRef.current) clearTimeout(passwordTimeoutRef.current);
   };
 
   return (
@@ -421,39 +342,39 @@ function PasswordForm() {
 
       <form onSubmit={handlePasswordSave} className="settings-form">
         <div className="form-group">
-          <label htmlFor="current">Current Password</label>
+          <label htmlFor="currentPassword">Current Password</label>
           <input
-            id="current"
+            id="currentPassword"
             type="password"
-            name="current"
-            value={password.current}
+            name="currentPassword"
+            value={password.currentPassword}
             onChange={handlePasswordChange}
-            disabled={passwordLoading}
-            className={passwordErrors.current ? 'error' : ''}
+            disabled={isLoading}
+            className={passwordErrors.currentPassword ? 'error' : ''}
             placeholder="••••••••"
           />
-          {passwordErrors.current && (
-            <span className="error-message">{passwordErrors.current}</span>
+          {passwordErrors.currentPassword && (
+            <span className="error-message">{passwordErrors.currentPassword}</span>
           )}
         </div>
 
         <div className="form-group">
-          <label htmlFor="new">New Password</label>
+          <label htmlFor="newPassword">New Password</label>
           <input
-            id="new"
+            id="newPassword"
             type="password"
-            name="new"
-            value={password.new}
+            name="newPassword"
+            value={password.newPassword}
             onChange={handlePasswordChange}
-            disabled={passwordLoading}
-            className={passwordErrors.new ? 'error' : ''}
+            disabled={isLoading}
+            className={passwordErrors.newPassword ? 'error' : ''}
             placeholder="••••••••"
           />
-          {passwordErrors.new && (
-            <span className="error-message">{passwordErrors.new}</span>
+          {passwordErrors.newPassword && (
+            <span className="error-message">{passwordErrors.newPassword}</span>
           )}
 
-          {password.new && (
+          {password.newPassword && (
             <div className="password-requirements" style={{ marginTop: '16px', fontSize: '0.85em' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: strength.length ? '#22c55e' : '#999' }}>
                 <span>{strength.length ? '✓' : '○'}</span>
@@ -470,7 +391,7 @@ function PasswordForm() {
             </div>
           )}
 
-          {!password.new && (
+          {!password.newPassword && (
             <span className="hint" style={{ fontSize: '0.85em', color: '#666', marginTop: '8px', display: 'block' }}>
               Password must contain at least 8 characters, 2 letters, and 2 numbers.
             </span>
@@ -478,55 +399,57 @@ function PasswordForm() {
         </div>
 
         <div className="form-group">
-          <label htmlFor="confirm">Confirm Password</label>
+          <label htmlFor="confirmPassword">Confirm Password</label>
           <input
-            id="confirm"
+            id="confirmPassword"
             type="password"
-            name="confirm"
-            value={password.confirm}
+            name="confirmPassword"
+            value={password.confirmPassword}
             onChange={handlePasswordChange}
-            disabled={passwordLoading}
-            className={passwordErrors.confirm ? 'error' : ''}
+            disabled={isLoading}
+            className={passwordErrors.confirmPassword ? 'error' : ''}
             placeholder="••••••••"
           />
-          {passwordErrors.confirm && (
-            <span className="error-message">{passwordErrors.confirm}</span>
+          {passwordErrors.confirmPassword && (
+            <span className="error-message">{passwordErrors.confirmPassword}</span>
           )}
 
-          {password.confirm && password.new && (
+          {password.confirmPassword && password.newPassword && (
             <span
               style={{
                 fontSize: '0.85em',
-                color: password.new === password.confirm ? '#22c55e' : '#ef4444',
+                color: password.newPassword === password.confirmPassword ? '#22c55e' : '#ef4444',
                 marginTop: '8px',
                 display: 'block',
               }}
             >
-              {password.new === password.confirm ? '✓ Passwords match' : '✗ Passwords do not match'}
+              {password.newPassword === password.confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
             </span>
           )}
         </div>
 
-        {passwordMessage && (
-          <div className={`message ${passwordMessage.startsWith('Error') ? 'error-message-box' : 'success-message'}`}>
-            {passwordMessage}
+        {message && (
+          <div className={`message ${message.startsWith('Error') ? 'error-message-box' : 'success-message'}`}>
+            {message}
           </div>
         )}
 
-        <div className="form-actions">
+        <div className="form-actions" style={{ display: 'flex', alignItems: 'stretch', gap: '12px' }}>
           <button
             type="submit"
-            disabled={!passwordHasValues || passwordLoading}
+            disabled={!passwordHasValues || isLoading}
             className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '46px' }}
           >
-            {passwordLoading ? 'Updating...' : 'Update Password'}
+            {isLoading ? 'Updating...' : 'Update Password'}
           </button>
           {passwordHasValues && (
             <button
               type="button"
               onClick={handlePasswordClear}
-              disabled={passwordLoading}
+              disabled={isLoading}
               className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '46px' }}
             >
               Clear
             </button>

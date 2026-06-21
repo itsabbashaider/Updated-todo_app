@@ -6,8 +6,7 @@ import {
 
 import Sidebar from '../components/layouts/sidebar.component';
 import { useTasks } from '../hooks/use-task.hook';
-import CreateModal from '../components/modals/create-tasks-modal.component';
-import EditModal from '../components/modals/edit-tasks-modal.component';
+import TaskModal from '../components/modals/tasks-modal.component';
 import TaskDetailModal from '../components/modals/task-details-modal.component';
 import ConfirmModal from '../components/modals/confirmation-modal.component';
 import { CalendarSkeleton } from '../components/skeletons/calendar.skeleton';
@@ -20,8 +19,8 @@ import {
 function CalendarPage() {
   const [currentDate, setCurrentDate]     = useState(new Date());
   const [selectedDate, setSelectedDate]   = useState(new Date());
-  const [isCreateOpen, setIsCreateOpen]   = useState(false);
-  const [editingTask, setEditingTask]     = useState(null);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask]   = useState(null);
   const [detailTask, setDetailTask]       = useState(null);
   const [confirmOpen, setConfirmOpen]     = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
@@ -118,6 +117,20 @@ function CalendarPage() {
 
   if (loading) return <div className="calendar-layout"><Sidebar /><CalendarSkeleton /></div>;
 
+  // ─── Modal Handlers ──────────────────────────────────────────────────────
+
+  const openTaskModal = (task = null) => {
+    setSelectedTask(task);
+    setTaskModalOpen(true);
+  };
+
+  const closeTaskModal = () => {
+    setTaskModalOpen(false);
+    setSelectedTask(null);
+  };
+
+  // ─── Confirmation Modal Handlers ─────────────────────────────────────────
+
   const askConfirm = (message, action) => {
     setConfirmMessage(message);
     setConfirmAction(() => action);
@@ -136,6 +149,8 @@ function CalendarPage() {
     closeConfirm();
   };
 
+  // ─── Task Action Handlers ────────────────────────────────────────────────
+
   const handleCreateTask = async (taskData) => {
     const taskDate = normalizeDate(selectedDate);
     const safeDate = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate(), 12, 0, 0);
@@ -146,12 +161,12 @@ function CalendarPage() {
       completed:   false,
       created_at:  safeDate.toISOString(),
     });
-    setIsCreateOpen(false);
+    closeTaskModal();
   };
 
   const handleUpdateTask = async (taskId, updates) => {
     await updateTaskData(taskId, updates);
-    setEditingTask(null);
+    closeTaskModal();
   };
 
   const onToggle = async (task) => {
@@ -173,7 +188,7 @@ function CalendarPage() {
 
   const onEdit = (task) => {
     if (task.completed) return;
-    setEditingTask(task);
+    openTaskModal(task);
   };
 
   const prevMonth = () => setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
@@ -271,7 +286,7 @@ function CalendarPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedDate(new Date(date));
-                        setTimeout(() => setIsCreateOpen(true), 0);
+                        setTimeout(() => openTaskModal(null), 0);
                       }}>
                       <FaPlus />
                     </button>
@@ -307,8 +322,15 @@ function CalendarPage() {
             </div>
           </div>
 
-          <CreateModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} onCreate={handleCreateTask} />
-          <EditModal isOpen={Boolean(editingTask)} onClose={() => setEditingTask(null)} task={editingTask} onUpdate={handleUpdateTask} />
+          {/* ✅ Single Unified Task Modal */}
+          <TaskModal
+            isOpen={taskModalOpen}
+            onClose={closeTaskModal}
+            task={selectedTask}
+            onCreate={handleCreateTask}
+            onUpdate={handleUpdateTask}
+          />
+
           <TaskDetailModal isOpen={Boolean(detailTask)} onClose={() => setDetailTask(null)} task={detailTask} />
           <ConfirmModal isOpen={confirmOpen} message={confirmMessage} onClose={closeConfirm} onConfirm={handleConfirm} />
         </div>

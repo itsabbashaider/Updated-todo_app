@@ -4,11 +4,11 @@ import {
   getSecurityQuestionsByEmail,
   verifySecurityAnswers,
 } from '../services/reset-pass.service';
-import { password_reset } from '../services/storage.service';
+import { passwordResetStorage } from '../services/storage.service';
 import { getErrorMessage } from '../utils/error-handler.util';
 
 const VerifySecurityAnswersPage = () => {
-  const [email] = useState(() => password_reset.getForgotPasswordEmail() || '');
+  const [email] = useState(() => passwordResetStorage.getForgotPasswordEmail() || '');
   const [userQuestions, setUserQuestions] = useState(null);
   const [answers, setAnswers] = useState({ answer1: '', answer2: '' });
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,6 @@ const VerifySecurityAnswersPage = () => {
     e.preventDefault();
     setError('');
 
-    // Validate answers are not empty
     if (!answers.answer1.trim() || !answers.answer2.trim()) {
       setError('Please answer both security questions');
       return;
@@ -63,7 +62,7 @@ const VerifySecurityAnswersPage = () => {
       );
 
       const resetToken = response.data.data.resetToken;
-      password_reset.saveResetToken(resetToken);
+      passwordResetStorage.saveResetToken(resetToken);
       navigate('/reset-password');
     } catch (err) {
       const errorMsg = getErrorMessage(err);
@@ -73,22 +72,18 @@ const VerifySecurityAnswersPage = () => {
     }
   };
 
-  // Loading state while fetching questions
   if (!userQuestions && !error) {
     return (
       <div className="auth-container">
         <div className="auth-card">
           <h2>Verify Your Identity</h2>
           <p>Loading your security questions...</p>
-          <div className="loading-spinner" style={{ marginTop: '20px' }}>
-            {/* You can add a spinner component here */}
-          </div>
+          <div className="loading-spinner" style={{ marginTop: '20px' }}></div>
         </div>
       </div>
     );
   }
 
-  // Error state (no questions found)
   if (error && !userQuestions) {
     return (
       <div className="auth-container">
@@ -105,7 +100,6 @@ const VerifySecurityAnswersPage = () => {
     );
   }
 
-  // Success state - show verification form
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -115,7 +109,9 @@ const VerifySecurityAnswersPage = () => {
         <form onSubmit={handleVerify}>
           <div className="form-group">
             <label htmlFor="answer1">Security Question 1</label>
-            <p className="question-text">{userQuestions?.[0]?.text}</p>
+            <p className="question-text">
+              {userQuestions?.[0]?.text || userQuestions?.[0]?.question || userQuestions?.[0]?.id}
+            </p>
             <input
               id="answer1"
               type="text"
@@ -130,7 +126,9 @@ const VerifySecurityAnswersPage = () => {
 
           <div className="form-group">
             <label htmlFor="answer2">Security Question 2</label>
-            <p className="question-text">{userQuestions?.[1]?.text}</p>
+            <p className="question-text">
+              {userQuestions?.[1]?.text || userQuestions?.[1]?.question || userQuestions?.[1]?.id}
+            </p>
             <input
               id="answer2"
               type="text"

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { getDashboard } from "../services/dashboard.service";
-import { useLoading } from "./use-loading.hook";
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getDashboard } from '../services/dashboard.service';
 
 const EMPTY_DASHBOARD = {
   peakHour: null,
@@ -16,47 +16,65 @@ const EMPTY_DASHBOARD = {
   },
 };
 
+// ✅ Get userId from localStorage or JWT token
+// ✅ FIXED: Uses userId (camelCase) - matches storage.service.js
+const getUserId = () => {
+  try {
+    // Option 1: From localStorage (matches saveUserData format)
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      return user.userId || user.id;
+    }
+    
+    // Option 2: From JWT token
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.user_id || payload.sub;
+    }
+  } catch (error) {
+    console.error('Failed to get userId:', error);
+  }
+  return null;
+};
+
+/**
+ * TanStack Query version of useDashboard
+ * ✅ FIXED: Includes userId in query key for user-specific caching
+ * ✅ FIXED: Uses camelCase userId consistently
+ */
 export function useDashboard() {
-  const [dashboard, setDashboard] = useState(EMPTY_DASHBOARD);
-  const [loading, setLoading]     = useState(true);         // ← NEW
-  const [error, setError]         = useState("");
+  // ✅ Get current user ID
+  const userId = useMemo(() => getUserId(), []);
 
-  const { startLoading, stopLoading } = useLoading();
+  const { data: dashboard, isLoading, error } = useQuery({
+    queryKey: ['dashboard', userId], // ✅ Include userId for user-specific cache
+    queryFn: async () => {
+      const response = await getDashboard();
+      
+      // ✅ Handle both cleaned service response (direct data) and nested response
+      const data = Array.isArray(response) 
+        ? response[0] 
+        : response?.data?.data || response || {};
 
-  useEffect(() => {
-    let mounted = true;
+      return {
+        ...EMPTY_DASHBOARD,
+        ...data,
+        stats: { ...EMPTY_DASHBOARD.stats, ...data.stats },
+        recentTasks: Array.isArray(data.recentTasks) ? data.recentTasks : [],
+      };
+    },
+    staleTime: 1000 * 60 * 5,    // 5 minutes
+    gcTime: 1000 * 60 * 10,      // 10 minutes
+    retry: 1,
+    refetchOnWindowFocus: false,
+    enabled: !!userId, // ✅ Only fetch if userId exists
+  });
 
-    const loadDashboard = async () => {
-      try {
-        startLoading();
-        setLoading(true);                                     // ← NEW
-
-        const res = await getDashboard();
-        if (!mounted) return;
-
-        const data = res?.data?.data || {};
-
-        setDashboard({
-          ...EMPTY_DASHBOARD,
-          ...data,
-          stats: { ...EMPTY_DASHBOARD.stats, ...data.stats },
-          recentTasks: data.recentTasks || [],
-        });
-
-        setError("");
-      } catch (err) {
-        if (!mounted) return;
-        setError(err.response?.data?.message || "Failed to load dashboard");
-        setDashboard(EMPTY_DASHBOARD);
-      } finally {
-        stopLoading();
-        if (mounted) setLoading(false);                      // ← NEW
-      }
-    };
-
-    loadDashboard();
-    return () => { mounted = false; };
-  }, [startLoading, stopLoading]);
-
-  return { dashboard, loading, error };                      // ← loading added here
+  return {
+    dashboard: dashboard || EMPTY_DASHBOARD,
+    loading: isLoading,
+    error: error?.message || '',
+  };
 }

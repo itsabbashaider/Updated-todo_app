@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query'; 
 
 import { logout } from '../../services/auth.service';
 import { useProfile } from '../../hooks/use-profile.hook';
@@ -23,6 +24,7 @@ function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const profileRef = useRef(null);
+  const queryClient = useQueryClient(); 
 
   const { user, loading, error, refetch } = useProfile();
   const { refreshTrigger } = useProfileRefresh(); // Listen for refresh signals
@@ -74,12 +76,21 @@ function Sidebar() {
     if (newState) setProfileExpanded(false);
   };
 
+  
   const confirmLogout = async () => {
     try {
       await logout();
     } catch (err) {
       console.error('Logout failed:', err);
     } finally {
+
+      queryClient.clear();
+      
+      
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('userData');
+      
+      
       navigate('/login', { replace: true });
     }
   };

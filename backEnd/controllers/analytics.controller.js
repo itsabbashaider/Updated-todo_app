@@ -5,9 +5,10 @@ const HTTP_STATUSES = require('../constants/http-status.constant');
 
 // ─── Get Analytics ────────────────────────────────────────────────────────────
 exports.getAnalytics = async (req, res) => {
+  const userId = req.user.user_id;  // ← Get userId from authenticated request
   const range = Number(req.query.range) || 7;
 
-  const analytics = await analyticsService.getAnalytics(req, range);
+  const analytics = await analyticsService.getAnalytics(userId, range);  // ← Pass userId!
 
   res.status(HTTP_STATUSES.OK).json({
     success: true,

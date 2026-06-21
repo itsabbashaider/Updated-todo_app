@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resetPassword } from '../services/reset-pass.service';
-import { password_reset } from '../services/storage.service';
+import { passwordResetStorage } from '../services/storage.service';
 import { getErrorMessage } from '../utils/error-handler.util';
 
 function ResetPasswordPage() {
@@ -11,7 +11,7 @@ function ResetPasswordPage() {
   }, []);
 
   const navigate = useNavigate();
-  const [resetToken] = useState(() => password_reset.getResetToken() || '');
+  const [resetToken] = useState(() => passwordResetStorage.getResetToken() || '');
   const [passwords, setPasswords] = useState({
     new: '',
     confirm: '',
@@ -95,10 +95,11 @@ function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      await resetPassword(resetToken, passwords.new);
+      // 💥 FIXED: Passed passwords.confirm down to fulfill API layer requirements
+      await resetPassword(resetToken, passwords.new, passwords.confirm);
 
       setSuccess('Password reset successfully! Redirecting to login...');
-      password_reset.clearPasswordResetFlow();
+      passwordResetStorage.clearPasswordResetFlow();
 
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
@@ -166,7 +167,6 @@ function ResetPasswordPage() {
               </div>
             )}
 
-            {/* Default hint when not typing */}
             {!passwords.new && (
               <span className="hint" style={{ fontSize: '0.85em', color: '#666', marginTop: '8px', display: 'block' }}>
                 Password must contain at least 8 characters, 2 letters, and 2 numbers.

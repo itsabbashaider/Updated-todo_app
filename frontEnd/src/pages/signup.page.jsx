@@ -110,6 +110,7 @@ const SignupPage = () => {
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
+          {/* Row 1: Name Profile Details */}
           <div className="form-row">
             <div className="form-group">
               <label>First Name</label>
@@ -136,110 +137,121 @@ const SignupPage = () => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="your@email.com"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-section">
-            <h3>Security Questions</h3>
-            <p className="form-hint">Answer these questions to recover your account if you forget your password</p>
-
+          {/* Row 2: Contact Info & Password Splits */}
+          <div className="form-row">
             <div className="form-group">
-              <label>Security Question 1</label>
-              <select
-                name="securityQuestion1"
-                value={formData.securityQuestion1}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              >
-                <option value="">Select a question</option>
-                {questions.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.text}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Your Answer</label>
+              <label>Email</label>
               <input
-                type="text"
-                name="securityAnswer1"
-                value={formData.securityAnswer1}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
-                placeholder="Your answer"
+                placeholder="your@email.com"
                 required
                 disabled={loading}
               />
             </div>
 
-            <div className="form-group">
-              <label>Security Question 2</label>
-              <select
-                name="securityQuestion2"
-                value={formData.securityQuestion2}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              >
-                <option value="">Select a question</option>
-                {questions.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.text}
-                  </option>
-                ))}
-              </select>
+            <div className="form-row" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Confirm</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          </div>
+
+          <hr style={{ border: 'none', borderTop: '1px solid #30363d', margin: '12px 0 24px 0' }} />
+
+          {/* Row 3: Dual Column Verification Questions */}
+          <div className="form-row">
+            
+            {/* Left Column Security Block */}
+            <div className="question-block">
+              <div className="form-group">
+                <label style={{ color: '#58a6ff', fontWeight: '600' }}>Security Question 1</label>
+                <select
+                  name="securityQuestion1"
+                  value={formData.securityQuestion1}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                >
+                  <option value="">Select a question</option>
+                  {questions.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.text}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <input
+                  type="text"
+                  name="securityAnswer1"
+                  value={formData.securityAnswer1}
+                  onChange={handleChange}
+                  placeholder="Your answer"
+                  required
+                  disabled={loading}
+                />
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Your Answer</label>
-              <input
-                type="text"
-                name="securityAnswer2"
-                value={formData.securityAnswer2}
-                onChange={handleChange}
-                placeholder="Your answer"
-                required
-                disabled={loading}
-              />
+            {/* Right Column Security Block */}
+            <div className="question-block">
+              <div className="form-group">
+                <label style={{ color: '#58a6ff', fontWeight: '600' }}>Security Question 2</label>
+                <select
+                  name="securityQuestion2"
+                  value={formData.securityQuestion2}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                >
+                  <option value="">Select a question</option>
+                  {questions.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.text}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <input
+                  type="text"
+                  name="securityAnswer2"
+                  value={formData.securityAnswer2}
+                  onChange={handleChange}
+                  placeholder="Your answer"
+                  required
+                  disabled={loading}
+                />
+              </div>
             </div>
+
           </div>
 
           <button type="submit" disabled={loading}>
@@ -248,7 +260,7 @@ const SignupPage = () => {
         </form>
 
         <div className="auth-links">
-          <p>
+          <p style={{ margin: 0, color: '#8b949e' }}>
             Already have an account? <Link to="/login">Login</Link>
           </p>
         </div>

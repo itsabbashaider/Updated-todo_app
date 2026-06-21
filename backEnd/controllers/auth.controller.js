@@ -2,25 +2,12 @@ const authService   = require('../services/auth.service');
 const asyncHandler  = require('../middlewares/async-handler.middleware');
 const HTTP_STATUSES = require('../constants/http-status.constant');
 
-const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure:   process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  maxAge:   30 * 24 * 60 * 60 * 1000,
-};
-
-const setRefreshCookie = (res, refreshToken) => {
-  res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
-};
-
-const clearRefreshCookie = (res) => {
-  res.clearCookie('refreshToken', REFRESH_COOKIE_OPTIONS);
-};
+const { setRefreshCookie, clearRefreshCookie } = require('../utils/auth.util');
 
 // Signup
 exports.signup = asyncHandler(async (req, res) => {
-  const { email, password, firstName, lastName, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2 } = req.body;
-  const result = await authService.signup(email, password, firstName, lastName, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2);
+  const { email, password, first_name, last_name, security_question_1, security_answer_1, security_question_2, security_answer_2 } = req.body;
+  const result = await authService.signup(email, password, first_name, last_name, security_question_1, security_answer_1, security_question_2, security_answer_2);
   setRefreshCookie(res, result.refreshToken);
 
   res.status(HTTP_STATUSES.CREATED).json({
@@ -83,54 +70,39 @@ exports.getCurrentUser = asyncHandler(async (req, res) => {
   res.status(HTTP_STATUSES.OK).json({ success: true, data: user });
 });
 
-// Update user profile
-exports.updateProfile = async (req, res) => {
+// Update user profile (first_name, last_name, email only)
+exports.updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user.user_id;
-  const { firstName, lastName, email } = req.body;
+  const { first_name, last_name, email } = req.body;
 
-  try {
-    const updatedUser = await authService.updateProfile(userId, {
-      firstName,
-      lastName,
-      email,
-    });
+  const updatedUser = await authService.updateProfile(userId, {
+    first_name,
+    last_name,
+    email,
+  });
 
-    return res.status(HTTP_STATUSES.OK).json({
-      success: true,
-      data: updatedUser,
-      message: 'Profile updated successfully',
-    });
-    
-  } catch (error) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: error.message || 'Failed to update profile settings.' }
-    });
-  }
-};
+  res.status(HTTP_STATUSES.OK).json({
+    success: true,
+    data: updatedUser,
+    message: 'Profile updated successfully',
+  });
+});
 
 // Change password
 exports.changePassword = asyncHandler(async (req, res) => {
   const userId = req.user.user_id;
   const { currentPassword, newPassword } = req.body;
 
-  try {
-    const result = await authService.changePassword(userId, currentPassword, newPassword);
-    
-    return res.status(HTTP_STATUSES.OK).json({
-      success: true,
-      message: 'Password changed successfully',
-      data: result,
-    });
-  } catch (error) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: error.message || 'Failed to change password.' }
-    });
-  }
+  const result = await authService.changePassword(userId, currentPassword, newPassword);
+
+  res.status(HTTP_STATUSES.OK).json({
+    success: true,
+    message: 'Password changed successfully',
+    data: result,
+  });
 });
 
-// Get security questions (all available questions - for settings form dropdown)
+// Get ALL available security questions (public, for settings form dropdown)
 exports.getSecurityQuestions = asyncHandler(async (req, res) => {
   const questions = authService.getSecurityQuestions();
   res.status(HTTP_STATUSES.OK).json({
@@ -139,127 +111,60 @@ exports.getSecurityQuestions = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ NEW: Get a SPECIFIC USER's security questions by email (for verify page)
+// Get a SPECIFIC USER's security questions by email (for verify page)
 exports.getUserSecurityQuestions = asyncHandler(async (req, res) => {
   const { email } = req.query;
+  const questions = await authService.getUserSecurityQuestions(email);
 
-  if (!email) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: 'Email is required' },
-    });
-  }
-
-  try {
-    const questions = await authService.getUserSecurityQuestions(email);
-    
-    res.status(HTTP_STATUSES.OK).json({
-      success: true,
-      data: questions,
-    });
-  } catch (error) {
-    res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: error.message || 'Failed to retrieve security questions' },
-    });
-  }
+  res.status(HTTP_STATUSES.OK).json({
+    success: true,
+    data: questions,
+  });
 });
 
-// ✅ UPDATED: Verify security answers with question IDs
+// Verify security answers with question IDs
 exports.verifySecurityAnswers = asyncHandler(async (req, res) => {
-  const { email, questionId1, questionId2, answer1, answer2 } = req.body;
+  const { email, question_id_1, question_id_2, answer_1, answer_2 } = req.body;
+  const result = await authService.verifySecurityAnswers(email, question_id_1, question_id_2, answer_1, answer_2);
 
-  if (!email || !answer1 || !answer2) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: 'Email and security answers required' },
-    });
-  }
-
-  // Question IDs are optional for backwards compatibility, but recommended
-  if (!questionId1 || !questionId2) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: 'Question IDs are required' },
-    });
-  }
-
-  try {
-    const result = await authService.verifySecurityAnswers(email, questionId1, questionId2, answer1, answer2);
-    
-    res.status(HTTP_STATUSES.OK).json({
-      success: true,
-      data: {
-        resetToken: result.resetToken,
-        message: result.message,
-      },
-    });
-  } catch (error) {
-    res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: error.message || 'Failed to verify security answers' },
-    });
-  }
+  res.status(HTTP_STATUSES.OK).json({
+    success: true,
+    data: {
+      resetToken: result.resetToken,
+      message: result.message,
+    },
+  });
 });
 
 // Reset password with reset token
 exports.resetPassword = asyncHandler(async (req, res) => {
   const { resetToken, newPassword } = req.body;
+  const user = await authService.resetPassword(resetToken, newPassword);
 
-  if (!resetToken || !newPassword) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: 'Reset token and new password required' },
-    });
-  }
-
-  try {
-    const user = await authService.resetPassword(resetToken, newPassword);
-    
-    res.status(HTTP_STATUSES.OK).json({
-      success: true,
-      data: user,
-      message: 'Password reset successfully',
-    });
-  } catch (error) {
-    res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: error.message || 'Failed to reset password' },
-    });
-  }
+  res.status(HTTP_STATUSES.OK).json({
+    success: true,
+    data: user,
+    message: 'Password reset successfully',
+  });
 });
 
 // Update security questions (from settings)
 exports.updateSecurityQuestions = asyncHandler(async (req, res) => {
   const userId = req.user.user_id;
-  const { securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2 } = req.body;
+  const { security_question_1, security_answer_1, security_question_2, security_answer_2 } = req.body;
 
-  if (!securityQuestion1 || !securityAnswer1 || !securityQuestion2 || !securityAnswer2) {
-    return res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: 'All security questions and answers are required' },
-    });
-  }
+  const result = await authService.updateSecurityQuestions(
+    userId,
+    security_question_1,
+    security_answer_1,
+    security_question_2,
+    security_answer_2,
+  );
 
-  try {
-    const result = await authService.updateSecurityQuestions(
-      userId,
-      securityQuestion1,
-      securityAnswer1,
-      securityQuestion2,
-      securityAnswer2,
-    );
-
-    res.status(HTTP_STATUSES.OK).json({
-      success: true,
-      message: result.message,
-    });
-  } catch (error) {
-    res.status(HTTP_STATUSES.BAD_REQUEST).json({
-      success: false,
-      error: { message: error.message || 'Failed to update security questions' },
-    });
-  }
+  res.status(HTTP_STATUSES.OK).json({
+    success: true,
+    message: result.message,
+  });
 });
 
 // Logout

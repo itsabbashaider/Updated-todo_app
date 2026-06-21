@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import Sidebar from '../components/layouts/sidebar.component';
-import CreateModal from '../components/modals/create-tasks-modal.component';
-import EditModal from '../components/modals/edit-tasks-modal.component';
+import TaskModal from '../components/modals/tasks-modal.component';
 import TaskDetailModal from '../components/modals/task-details-modal.component';
 import ConfirmModal from '../components/modals/confirmation-modal.component';
 import { TasksSkeleton } from '../components/skeletons/task.skeleton';
 import { useTasksPage } from '../hooks/use-task-loading.hook';
+import { getErrorMessage } from '../utils/error-handler.util';
 
 import {
   PRIORITY_COLORS,
@@ -28,12 +28,13 @@ import '../styles/tasks.css';
 
 function TasksPage() {
   const [search, setSearch] = useState('');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [detailTask, setDetailTask] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
+  const [taskError, setTaskError] = useState(''); 
 
   const {
     pendingTasks,
@@ -47,7 +48,8 @@ function TasksPage() {
     refetch,
   } = useTasksPage(search);
 
-  // Utility functions for date normalization (same as CalendarPage)
+  // ─── Utility Functions ───────────────────────────────────────────────────
+
   const normalizeDate = (date) => {
     const normalized = new Date(date);
     normalized.setHours(0, 0, 0, 0);
@@ -62,26 +64,46 @@ function TasksPage() {
 
   const today = normalizeDate(new Date());
 
-  // Task Actions Handlers
+  // ─── Modal Handlers ──────────────────────────────────────────────────────
+
+  const openTaskModal = (task = null) => {
+    setSelectedTask(task);
+    setTaskModalOpen(true);
+    setTaskError(''); // ✅ Clear any previous errors
+  };
+
+  const closeTaskModal = () => {
+    setTaskModalOpen(false);
+    setSelectedTask(null);
+    setTaskError(''); // ✅ Clear errors on close
+  };
+
+  // ─── Task Action Handlers ────────────────────────────────────────────────
+
   const handleCreateTask = async (taskData) => {
+    setTaskError(''); // ✅ Clear previous errors
     try {
       await addTask({ ...taskData, completed: false });
-      setIsCreateOpen(false);
+      closeTaskModal();
     } catch (err) {
-      console.error('Failed to create task:', err);
+      const errorMsg = getErrorMessage(err);
+      setTaskError(errorMsg); // ✅ Show error to user
     }
   };
 
   const handleUpdateTask = async (taskId, updates) => {
+    setTaskError(''); // ✅ Clear previous errors
     try {
       await updateTaskData(taskId, updates);
-      setEditingTask(null);
+      closeTaskModal();
     } catch (err) {
-      console.error('Failed to update task:', err);
+      const errorMsg = getErrorMessage(err);
+      setTaskError(errorMsg); // ✅ Show error to user
     }
   };
 
-  // Confirmation Modal Engine Setup
+  // ─── Confirmation Modal Engine ───────────────────────────────────────────
+
   const askConfirm = (message, action) => {
     setConfirmMessage(message);
     setConfirmAction(() => action);
@@ -99,6 +121,8 @@ function TasksPage() {
     await confirmAction();
     closeConfirm();
   };
+
+  // ─── Task Status Handlers ────────────────────────────────────────────────
 
   const onToggle = async (task) => {
     if (task.completed) {
@@ -121,17 +145,16 @@ function TasksPage() {
 
   const onEdit = (task) => {
     if (!task || task.completed) return;
-    setEditingTask(task);
+    openTaskModal(task);
   };
-
-  const closeEditModal = () => setEditingTask(null);
-  const closeDetailModal = () => setDetailTask(null);
 
   const onDelete = (task) => {
     askConfirm('Are you sure you want to delete this task?', async () => {
       await removeTask(task.task_id || task.id);
     });
   };
+
+  // ─── Render Task Card ────────────────────────────────────────────────────
 
   const renderTaskCard = (task) => {
     const taskId = task.task_id || task.id;
@@ -206,7 +229,8 @@ function TasksPage() {
     );
   };
 
-  // Early Render for Loading skeletons
+  // ─── Early Render for Loading skeletons ──────────────────────────────────
+
   if (loading) {
     return (
       <div className="tasks-layout">
@@ -215,6 +239,8 @@ function TasksPage() {
       </div>
     );
   }
+
+  // ─── Main Render ─────────────────────────────────────────────────────────
 
   return (
     <div className="tasks-layout">
@@ -252,7 +278,7 @@ function TasksPage() {
               <button
                 className="btn primary"
                 type="button"
-                onClick={() => setIsCreateOpen(true)}
+                onClick={() => openTaskModal(null)}
               >
                 <FaPlus />
               </button>
@@ -299,23 +325,19 @@ function TasksPage() {
 
           </div>
 
-          {/* Modals Containers Layout */}
-          <CreateModal
-            isOpen={isCreateOpen}
-            onClose={() => setIsCreateOpen(false)}
+          {/* ✅ Single Unified Task Modal with Error Display */}
+          <TaskModal
+            isOpen={taskModalOpen}
+            onClose={closeTaskModal}
+            task={selectedTask}
             onCreate={handleCreateTask}
-          />
-          
-          <EditModal
-            isOpen={Boolean(editingTask)}
-            onClose={closeEditModal}
-            task={editingTask}
             onUpdate={handleUpdateTask}
+            error={taskError} // ✅ Pass error to modal
           />
           
           <TaskDetailModal
             isOpen={Boolean(detailTask)}
-            onClose={closeDetailModal}
+            onClose={() => setDetailTask(null)}
             task={detailTask}
           />
           

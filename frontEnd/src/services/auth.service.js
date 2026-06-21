@@ -1,37 +1,32 @@
 import axiosInstance from './axios-instance.service';
 
 /**
- * User Service
- * Handles: API calls only
- * Does NOT handle: token storage, auth state, business logic
+ * Auth Service
+ * Uses snake_case throughout - matches backend exactly
+ * No transformation needed
  */
 
 // ==========================================
 // AUTH OPERATIONS
 // ==========================================
 
-export const signup = (email, password, firstName, lastName) =>
+export const signup = (email, password, first_name, last_name, security_question_1, security_answer_1, security_question_2, security_answer_2) =>
   axiosInstance.post('/users/signup', {
     email,
     password,
-    firstName,
-    lastName,
+    first_name,
+    last_name,
+    security_question_1,
+    security_answer_1,
+    security_question_2,
+    security_answer_2,
   });
 
-export const login = async (email, password) => {
-  const response = await axiosInstance.post('/users/login', {
+export const login = async (email, password) =>
+  axiosInstance.post('/users/login', {
     email,
     password,
   });
-
-  const accessToken = response?.data?.data?.accessToken;
-
-  if (accessToken) {
-    localStorage.setItem('accessToken', accessToken);
-  }
-
-  return response;
-};
 
 export const logout = async () => {
   try {
@@ -46,16 +41,14 @@ export const logout = async () => {
 // ==========================================
 
 export const getCurrentUser = () =>
-  axiosInstance.get('/users/me', {
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      Pragma: 'no-cache',
-      Expires: '0',
-    },
-  });
+  axiosInstance.get('/users/me');
 
-export const updateProfile = (updates) =>
-  axiosInstance.put('/users/me', updates);
+export const updateProfile = (first_name, last_name, email) =>
+  axiosInstance.put('/users/me', {
+    first_name,
+    last_name,
+    email,
+  });
 
 // ==========================================
 // PASSWORD OPERATIONS
@@ -65,24 +58,20 @@ export const changePassword = (currentPassword, newPassword) =>
   axiosInstance.post('/users/change-password', {
     currentPassword,
     newPassword,
+    confirmPassword: newPassword,
   });
 
 // ==========================================
 // SECURITY QUESTIONS
 // ==========================================
 
-export const getSecurityQuestionsForUser = () =>
-  axiosInstance.get('/users/me/security-questions');
+export const getSecurityQuestions = () =>
+  axiosInstance.get('/users/security-questions');
 
-export const updateSecurityAnswers = (
-  questionId1,
-  answer1,
-  questionId2,
-  answer2
-) =>
-  axiosInstance.post('/users/me/security-questions', {
-    questionId1,
-    answer1: answer1.trim(),
-    questionId2,
-    answer2: answer2.trim(),
+export const updateSecurityQuestions = (security_question_1, security_answer_1, security_question_2, security_answer_2) =>
+  axiosInstance.put('/users/security-questions', {
+    security_question_1,
+    security_answer_1,
+    security_question_2,
+    security_answer_2,
   });

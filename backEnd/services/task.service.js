@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 const { Task } = require('../models');
-const { NotFoundError } = require('../utils/errors-classes.util');
+const { NotFoundError } = require('../errors');
 const { getRequestUserId } = require('../utils/request.util');
 const {
   TASK_ATTRIBUTES,

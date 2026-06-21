@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getSecurityQuestionsByEmail } from '../services/reset-pass.service';
+import { passwordResetStorage } from '../services/storage.service';
+import { getErrorMessage } from '../utils/error-handler.util';
 
 function ForgotPasswordPage() {
   useEffect(() => {
     document.body.classList.add('auth-page');
     return () => document.body.classList.remove('auth-page');
   }, []);
+
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,14 +21,16 @@ function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/users/security-questions');
-      if (!response.ok) throw new Error('Failed to load security questions');
+      // ✅ Verify email exists by fetching security questions
+      await getSecurityQuestionsByEmail(email);
 
-      // Store email and navigate to answer questions
-      sessionStorage.setItem('forgotPasswordEmail', email);
+      // ✅ If successful, save email to storage
+      passwordResetStorage.saveForgotPasswordEmail(email);
       navigate('/verify-security-answers');
     } catch (err) {
-      setError(err.message || 'An error occurred');
+      // ✅ Show user-friendly error
+      const errorMsg = getErrorMessage(err);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

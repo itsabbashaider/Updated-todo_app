@@ -1,5 +1,5 @@
 // ─── Dependencies ─────────────────────────────────────────────────────────────
-const { ValidationError } = require('../utils/errors-classes.util');
+const { ValidationError } = require('../errors');
 
 // ─── Validate Request ─────────────────────────────────────────────────────────
 const validateRequest = (schema, source = 'body') => (req, res, next) => {

@@ -4,7 +4,8 @@ import { useLoading } from './use-loading.hook';
 
 export function useCalendarPage(currentDate = new Date()) {
   const { startLoading, stopLoading } = useLoading();
-  
+
+  // Calculate date range for current month
   const filters = useMemo(() => {
     const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -15,15 +16,8 @@ export function useCalendarPage(currentDate = new Date()) {
     };
   }, [currentDate]);
 
-  const {
-    tasks,
-    loading,
-    error,
-    addTask,
-    removeTask,
-    toggleTask,
-    updateTaskData,
-  } = useTasks(filters);
+  // ✅ TanStack Query - automatic caching, deduplication, refetching
+  const { tasks, loading, error, addTask, removeTask, toggleTask, updateTaskData } = useTasks(filters);
 
   // Sync with global loading context
   useEffect(() => {
@@ -33,6 +27,8 @@ export function useCalendarPage(currentDate = new Date()) {
       stopLoading();
     }
   }, [loading, startLoading, stopLoading]);
+
+  // ─── Utility Functions ─────────────────────────────────────────────────────
 
   const normalizeDate = useCallback((date) => {
     const normalized = new Date(date);

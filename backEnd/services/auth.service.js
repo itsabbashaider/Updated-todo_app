@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const jwt    = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const { User } = require('../models');
@@ -7,72 +6,35 @@ const {
   BadRequestError,
   NotFoundError,
   UnauthorizedError,
-} = require('../utils/errors-classes.util');
+} = require('../errors');
+
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  normalizeEmail,
+  normalizeAnswer,
+  getUserResponse,
+} = require('../utils/auth.util');
 
 const SECURITY_QUESTIONS = require('../constants/security-questions.constant');
 
-const getJwtSecret     = () => process.env.JWT_SECRET          || 'taskflow-local-dev-secret';
-const getRefreshSecret = () => process.env.JWT_REFRESH_SECRET  || 'taskflow-refresh-secret';
-
-const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
-const isValidEmail   = (email) => /\S+@\S+\.\S+/.test(email);
-
-// ✅ NEW: Normalize security answer (trim + lowercase)
-const normalizeAnswer = (answer) => String(answer || '').trim().toLowerCase();
-
-const getUserResponse = (user) => ({
-  id:        user.user_id,
-  email:     user.email,
-  firstName: user.firstName,
-  lastName:  user.lastName,
-  lastLogin: user.lastLogin,
-});
-
-// ── Token generators ─────────────────────────────────────────────────────────
-
-const generateAccessToken = (user) =>
-  jwt.sign(
-    { user_id: user.user_id, email: user.email },
-    getJwtSecret(),
-    { expiresIn: '15m' }
-  );
-
-const generateRefreshToken = (user) =>
-  jwt.sign(
-    { user_id: user.user_id },
-    getRefreshSecret(),
-    { expiresIn: '30d' }
-  );
-
-exports.generateAccessToken  = generateAccessToken;
-exports.generateRefreshToken = generateRefreshToken;
-exports.generateToken        = generateAccessToken; // backwards compat
-
-// ── Signup ───────────────────────────────────────────────────────────────────
-
-exports.signup = async (email, password, firstName, lastName, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2) => {
+exports.signup = async (email, password, first_name, last_name, security_question_1, security_answer_1, security_question_2, security_answer_2) => {
   const normalizedEmail = normalizeEmail(email);
-
-  if (!isValidEmail(normalizedEmail))  throw new BadRequestError('Enter a valid email');
-  if (password.length < 6)             throw new BadRequestError('Password must be at least 6 characters');
-  if (!securityAnswer1 || !securityAnswer2) throw new BadRequestError('Security answers required');
 
   const existingUser = await User.findOne({ where: { email: normalizedEmail } });
   if (existingUser) throw new BadRequestError('Email already registered');
 
   const user = await User.create({
-    email:           normalizedEmail,
-    password:        await bcrypt.hash(password, 10),
-    firstName:       firstName || null,
-    lastName:        lastName  || null,
-    securityQuestion1,
-    // ✅ Use normalizeAnswer helper
-    securityAnswer1: await bcrypt.hash(normalizeAnswer(securityAnswer1), 10),
-    securityQuestion2,
-    // ✅ Use normalizeAnswer helper
-    securityAnswer2: await bcrypt.hash(normalizeAnswer(securityAnswer2), 10),
-    isEmailVerified: true,
-    lastLogin:       new Date(),
+    email:              normalizedEmail,
+    password:           await bcrypt.hash(password, 10),
+    first_name:         first_name || null,
+    last_name:          last_name  || null,
+    security_question_1,
+    security_answer_1:  await bcrypt.hash(normalizeAnswer(security_answer_1), 10),
+    security_question_2,
+    security_answer_2:  await bcrypt.hash(normalizeAnswer(security_answer_2), 10),
+    is_email_verified:  true,
+    last_login:         new Date(),
   });
 
   return {
@@ -82,20 +44,18 @@ exports.signup = async (email, password, firstName, lastName, securityQuestion1,
   };
 };
 
-// ── Login ────────────────────────────────────────────────────────────────────
-
 exports.login = async (email, password) => {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ where: { email: normalizedEmail } });
 
-  if (!user)                            throw new UnauthorizedError('Invalid email or password');
+  if (!user) throw new UnauthorizedError('Invalid email or password');
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid)                 throw new UnauthorizedError('Invalid email or password');
+  if (!isPasswordValid) throw new UnauthorizedError('Invalid email or password');
 
-  if (!user.isActive)                   throw new UnauthorizedError('Account is deactivated');
+  if (!user.is_active) throw new UnauthorizedError('Account is deactivated');
 
-  user.lastLogin = new Date();
+  user.last_login = new Date();
   await user.save();
 
   return {
@@ -105,33 +65,20 @@ exports.login = async (email, password) => {
   };
 };
 
-// ── Verify access token ──────────────────────────────────────────────────────
-
-exports.verifyToken = (token) => {
-  try {
-    return jwt.verify(token, getJwtSecret());
-  } catch {
-    throw new UnauthorizedError('Invalid or expired token');
-  }
-};
-
-// ── Refresh tokens ───────────────────────────────────────────────────────────
-
 exports.refreshTokens = (refreshToken) => {
+  const { verifyRefreshToken } = require('../utils/auth.util');
   let decoded;
   try {
-    decoded = jwt.verify(refreshToken, getRefreshSecret());
+    decoded = verifyRefreshToken(refreshToken);
   } catch {
     throw new UnauthorizedError('Invalid or expired refresh token');
   }
 
   return {
-    accessToken:  jwt.sign({ user_id: decoded.user_id }, getJwtSecret(),     { expiresIn: '15m' }),
-    refreshToken: jwt.sign({ user_id: decoded.user_id }, getRefreshSecret(), { expiresIn: '30d' }),
+    accessToken:  generateAccessToken({ user_id: decoded.user_id }),
+    refreshToken: generateRefreshToken({ user_id: decoded.user_id }),
   };
 };
-
-// ── Get user by ID ───────────────────────────────────────────────────────────
 
 exports.getUserById = async (userId) => {
   const user = await User.findByPk(userId, {
@@ -143,22 +90,14 @@ exports.getUserById = async (userId) => {
   return user;
 };
 
-// ── Update user profile (firstName, lastName, email only) ──────────────────────
-
 exports.updateProfile = async (userId, updates) => {
-  const { firstName, lastName, email } = updates;
+  const { first_name, last_name, email } = updates;
 
   const user = await User.findByPk(userId);
   if (!user) throw new NotFoundError('User not found');
 
-  // Update firstName/lastName
-  if (firstName !== undefined) user.firstName = firstName.trim() || null;
-  if (lastName !== undefined)  user.lastName  = lastName.trim()  || null;
-
-  // Update email (check for duplicates)
   if (email !== undefined) {
     const normalizedEmail = normalizeEmail(email);
-    if (!isValidEmail(normalizedEmail)) throw new BadRequestError('Invalid email format');
 
     const existingUser = await User.findOne({
       where: { 
@@ -171,41 +110,26 @@ exports.updateProfile = async (userId, updates) => {
     user.email = normalizedEmail;
   }
 
+  if (first_name !== undefined) user.first_name = first_name.trim() || null;
+  if (last_name !== undefined)  user.last_name  = last_name.trim()  || null;
+
   await user.save();
 
   return getUserResponse(user);
 };
 
-// ── Change password (separate from profile) ────────────────────────────────────
-
 exports.changePassword = async (userId, currentPassword, newPassword) => {
-  if (!currentPassword || !newPassword) {
-    throw new BadRequestError('Current password and new password are required');
-  }
-
-  if (newPassword.length < 6) {
-    throw new BadRequestError('New password must be at least 6 characters');
-  }
-
-  if (currentPassword === newPassword) {
-    throw new BadRequestError('New password must be different from current password');
-  }
-
   const user = await User.findByPk(userId);
   if (!user) throw new NotFoundError('User not found');
 
-  // Verify current password
   const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
   if (!isPasswordValid) throw new BadRequestError('Current password is incorrect');
 
-  // Update password
   user.password = await bcrypt.hash(newPassword, 10);
   await user.save();
 
   return getUserResponse(user);
 };
-
-// ── Get security questions ───────────────────────────────────────────────────
 
 exports.getSecurityQuestions = () => {
   return Object.values(SECURITY_QUESTIONS).map(q => ({
@@ -214,40 +138,53 @@ exports.getSecurityQuestions = () => {
   }));
 };
 
-// ✅ NEW: Get a specific user's security questions by email (for verification page)
 exports.getUserSecurityQuestions = async (email) => {
   const normalizedEmail = normalizeEmail(email);
-
-  if (!isValidEmail(normalizedEmail)) {
-    throw new BadRequestError('Invalid email format');
-  }
-
   const user = await User.findOne({ where: { email: normalizedEmail } });
 
   if (!user) {
     throw new BadRequestError('User not found');
   }
 
-  if (!user.securityQuestion1 || !user.securityQuestion2) {
+  if (!user.security_question_1 || !user.security_question_2) {
     throw new BadRequestError('Security questions not configured for this account');
   }
 
-  // ✅ FIX: Find questions by ID property instead of key lookup
-  const question1 = Object.values(SECURITY_QUESTIONS).find(q => q.id === user.securityQuestion1);
-  const question2 = Object.values(SECURITY_QUESTIONS).find(q => q.id === user.securityQuestion2);
+  const getQuestionDetails = (dbValue) => {
+    const cleanValue = String(dbValue).trim();
+    const list = Object.values(SECURITY_QUESTIONS);
 
-  if (!question1 || !question2) {
-    throw new BadRequestError('Invalid security questions stored for this account');
-  }
+    // 1. Direct match with our updated string IDs
+    let match = list.find(q => String(q.id) === cleanValue);
+    if (match) return match;
+
+    // 2. Legacy Lookup Fallback: Map old index selections accurately
+    const legacyMap = {
+      '1': 'mother_maiden_name',
+      '2': 'first_pet_name',
+      '3': 'birth_city',
+      '4': 'favorite_book',
+      '5': 'high_school_name'
+    };
+
+    if (legacyMap[cleanValue]) {
+      const realId = legacyMap[cleanValue];
+      if (SECURITY_QUESTIONS[realId]) return SECURITY_QUESTIONS[realId];
+    }
+
+    return { id: dbValue, text: `Security Question #${dbValue}` };
+  };
+
+  const q1 = getQuestionDetails(user.security_question_1);
+  const q2 = getQuestionDetails(user.security_question_2);
 
   return [
-    { id: question1.id, text: question1.text },
-    { id: question2.id, text: question2.text },
+    { id: q1.id, text: q1.text },
+    { id: q2.id, text: q2.text },
   ];
 };
 
-// ✅ UPDATED: Verify security answers with question IDs
-exports.verifySecurityAnswers = async (email, questionId1, questionId2, answer1, answer2) => {
+exports.verifySecurityAnswers = async (email, question_id_1, question_id_2, answer_1, answer_2) => {
   const normalizedEmail = normalizeEmail(email);
   const user = await User.findOne({ where: { email: normalizedEmail } });
 
@@ -255,34 +192,52 @@ exports.verifySecurityAnswers = async (email, questionId1, questionId2, answer1,
     throw new BadRequestError('User not found');
   }
 
-  if (!user.securityAnswer1 || !user.securityAnswer2) {
+  if (!user.security_answer_1 || !user.security_answer_2) {
     throw new BadRequestError('Security questions not configured for this account');
   }
 
-  // ✅ Validate that the questions match the ones the user set up
-  if (user.securityQuestion1 !== questionId1 || user.securityQuestion2 !== questionId2) {
-    throw new BadRequestError('Security answers are incorrect');
+  // Get raw string representations from the DB and Request Payload
+  const dbQ1 = String(user.security_question_1).trim();
+  const dbQ2 = String(user.security_question_2).trim();
+  const reqQ1 = String(question_id_1).trim();
+  const reqQ2 = String(question_id_2).trim();
+
+  // Legacy index map to match numeric entries to our new key layout
+  const legacyMap = {
+    '1': 'mother_maiden_name',
+    '2': 'first_pet_name',
+    '3': 'birth_city',
+    '4': 'favorite_book',
+    '5': 'high_school_name'
+  };
+
+  // Check if they match directly, OR match through the legacy numeric mapping layer
+  const isValidQuestion1 = (reqQ1 === dbQ1 || legacyMap[dbQ1] === reqQ1 || legacyMap[reqQ1] === dbQ1);
+  const isValidQuestion2 = (reqQ2 === dbQ2 || legacyMap[dbQ2] === reqQ2 || legacyMap[reqQ2] === dbQ2);
+
+  if (!isValidQuestion1 || !isValidQuestion2) {
+    throw new BadRequestError('Security questions validation mismatch');
   }
 
-  // ✅ Verify answers using normalized comparison
+  // Verify the hashed answers securely
   const isAnswer1Valid = await bcrypt.compare(
-    normalizeAnswer(answer1),
-    user.securityAnswer1
+    normalizeAnswer(answer_1),
+    user.security_answer_1
   );
 
   const isAnswer2Valid = await bcrypt.compare(
-    normalizeAnswer(answer2),
-    user.securityAnswer2
+    normalizeAnswer(answer_2),
+    user.security_answer_2
   );
 
   if (!isAnswer1Valid || !isAnswer2Valid) {
     throw new BadRequestError('Security answers are incorrect');
   }
 
-  // Generate reset token (valid for 15 minutes)
+  // All looks good! Generate password reset configuration token
   const resetToken = crypto.randomBytes(32).toString('hex');
-  user.passwordResetToken = resetToken;
-  user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  user.password_reset_token = resetToken;
+  user.password_reset_expires_at = new Date(Date.now() + 15 * 60 * 1000); // 15 mins expiry
   await user.save();
 
   return {
@@ -291,21 +246,11 @@ exports.verifySecurityAnswers = async (email, questionId1, questionId2, answer1,
   };
 };
 
-// ── Reset password with token ────────────────────────────────────────────────
-
 exports.resetPassword = async (resetToken, newPassword) => {
-  if (!resetToken || !newPassword) {
-    throw new BadRequestError('Reset token and new password are required');
-  }
-
-  if (newPassword.length < 6) {
-    throw new BadRequestError('New password must be at least 6 characters');
-  }
-
   const user = await User.findOne({
     where: {
-      passwordResetToken: resetToken,
-      passwordResetExpiresAt: { [require('sequelize').Op.gt]: new Date() },
+      password_reset_token: resetToken,
+      password_reset_expires_at: { [require('sequelize').Op.gt]: new Date() },
     },
   });
 
@@ -313,34 +258,22 @@ exports.resetPassword = async (resetToken, newPassword) => {
     throw new BadRequestError('Invalid or expired reset token');
   }
 
-  // Update password
   user.password = await bcrypt.hash(newPassword, 10);
-  user.passwordResetToken = null;
-  user.passwordResetExpiresAt = null;
+  user.password_reset_token = null;
+  user.password_reset_expires_at = null;
   await user.save();
 
   return getUserResponse(user);
 };
 
-// ── Update security questions ────────────────────────────────────────────────
-
-exports.updateSecurityQuestions = async (userId, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2) => {
-  if (!securityQuestion1 || !securityAnswer1 || !securityQuestion2 || !securityAnswer2) {
-    throw new BadRequestError('All security questions and answers are required');
-  }
-
-  if (securityQuestion1 === securityQuestion2) {
-    throw new BadRequestError('Please select two different security questions');
-  }
-
+exports.updateSecurityQuestions = async (userId, security_question_1, security_answer_1, security_question_2, security_answer_2) => {
   const user = await User.findByPk(userId);
   if (!user) throw new NotFoundError('User not found');
 
-  // Hash answers with normalized values
-  user.securityQuestion1 = securityQuestion1;
-  user.securityAnswer1 = await bcrypt.hash(normalizeAnswer(securityAnswer1), 10);
-  user.securityQuestion2 = securityQuestion2;
-  user.securityAnswer2 = await bcrypt.hash(normalizeAnswer(securityAnswer2), 10);
+  user.security_question_1 = security_question_1;
+  user.security_answer_1 = await bcrypt.hash(normalizeAnswer(security_answer_1), 10);
+  user.security_question_2 = security_question_2;
+  user.security_answer_2 = await bcrypt.hash(normalizeAnswer(security_answer_2), 10);
   
   await user.save();
 

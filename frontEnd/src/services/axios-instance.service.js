@@ -1,5 +1,5 @@
 import axios from "axios";
-import HTTP_STATUSES from "../constants/http-statuses.constant";
+import { authStorage, purgeAllStorage } from "./storage.service";
 
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -9,24 +9,16 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-const getAccessToken = () => localStorage.getItem("accessToken");
-const saveAccessToken = (token) => localStorage.setItem("accessToken", token);
-const clearAccessToken = () => localStorage.removeItem("accessToken");
-
 const redirectToLogin = () => {
-  clearAccessToken();
+  purgeAllStorage();
   window.location.href = "/login";
 };
 
-// ==========================================
-// GLOBAL LOADING STATE (Managed Here)
-// ==========================================
 let activeRequestsRef = 0;
 let startTimeRef = null;
 let loadingTimeoutRef = null;
 let loadingStateCallback = null;
 
-// Register callback from LoadingProvider
 export const setLoadingStateCallback = (callback) => {
   loadingStateCallback = callback;
 };
@@ -37,7 +29,6 @@ const notifyLoadingState = (isLoading) => {
   }
 };
 
-// Refresh logic
 let isRefreshing = false;
 let refreshQueue = [];
 
@@ -56,40 +47,56 @@ const tryRefreshToken = async () => {
     { withCredentials: true }
   );
 
-  const { accessToken } = response.data.data;
-  saveAccessToken(accessToken);
+  const nestedPayload = response?.data?.data || response?.data || response;
+  const accessToken = nestedPayload?.accessToken || nestedPayload?.token;
+
+  if (!accessToken) {
+    throw new Error("Refresh token failed");
+  }
+
+  authStorage.saveToken(accessToken);
   return accessToken;
 };
 
 const proactiveRefresh = async () => {
-  const accessToken = getAccessToken();
+  const accessToken = authStorage.getToken();
   if (!accessToken) return;
 
   try {
-    const payload = JSON.parse(atob(accessToken.split(".")[1]));
+    const base64Url = accessToken.split(".")[1];
+    if (!base64Url) return;
+
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      window
+        .atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+
+    const payload = JSON.parse(jsonPayload);
     const expiresAt = payload.exp * 1000;
     const fiveMinutes = 5 * 60 * 1000;
 
     if (expiresAt - Date.now() < fiveMinutes) {
       await tryRefreshToken();
     }
-  } catch {
-    clearAccessToken();
+  } catch (error) {
+    console.error("Proactive token refresh decoding error:", error);
   }
 };
 
-proactiveRefresh();
-
-// ==========================================
-// REQUEST INTERCEPTOR
-// ==========================================
-// ✅ START LOADING HERE (single source of truth)
 axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = getAccessToken();
+  async (config) => {
+    const url = config.url || "";
+    if (!url.includes("/users/login") && !url.includes("/users/refresh")) {
+      await proactiveRefresh();
+    }
+
+    const token = authStorage.getToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
 
-    // ✅ Increment request counter and show loading
     activeRequestsRef += 1;
 
     if (activeRequestsRef === 1) {
@@ -97,7 +104,6 @@ axiosInstance.interceptors.request.use(
       notifyLoadingState(true);
     }
 
-    // Clear any pending timeout
     if (loadingTimeoutRef) {
       clearTimeout(loadingTimeoutRef);
       loadingTimeoutRef = null;
@@ -108,16 +114,10 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ==========================================
-// RESPONSE INTERCEPTOR
-// ==========================================
-// ✅ STOP LOADING HERE (single source of truth)
 axiosInstance.interceptors.response.use(
   (response) => {
-    // ✅ Decrement request counter
     activeRequestsRef = Math.max(0, activeRequestsRef - 1);
 
-    // Only hide loading when all requests are done
     if (activeRequestsRef === 0) {
       const elapsed = Date.now() - (startTimeRef || Date.now());
       const minTime = 250;
@@ -132,7 +132,6 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error) => {
-    // ✅ Decrement request counter on error too
     activeRequestsRef = Math.max(0, activeRequestsRef - 1);
 
     if (activeRequestsRef === 0) {
@@ -155,7 +154,7 @@ axiosInstance.interceptors.response.use(
       url.includes("/users/signup") ||
       url.includes("/users/refresh");
 
-    if (status === HTTP_STATUSES.UNAUTHORIZED && !isAuthEndpoint && !originalRequest._retry) {
+    if (status === 401 && !isAuthEndpoint && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           refreshQueue.push({ resolve, reject });

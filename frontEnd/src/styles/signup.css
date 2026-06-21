@@ -10,77 +10,149 @@
 
 .signup-form {
   width: 100%;
-  max-width: 520px;
+  max-width: 680px;
   background: #161b22;
   border: 1px solid #30363d;
   border-radius: 12px;
-  padding: 32px;
+  padding: 40px;
   box-sizing: border-box;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .signup-form h1 {
-  margin: 0 0 24px;
+  margin: 0 0 32px;
   text-align: center;
   color: #f0f6fc;
-  font-size: 28px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 24px; /* Increased structural gap between input columns */
 }
 
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px; /* Increased vertical gap between stacked input fields */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
-  color: #c9d1d9;
-  font-size: 14px;
+  margin-bottom: 8px; /* Slight gap below labels */
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 500;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   width: 100%;
-  padding: 12px 14px;
+  padding: 11px 14px;
   background: #0d1117;
   border: 1px solid #30363d;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #f0f6fc;
   font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   outline: none;
-  border-color: #238636;
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.form-group input::placeholder {
+  color: #484f58;
+}
+
+/* Custom dropdown chevron consistency styling */
+.form-group select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b949e'><path d='M8 10.5l-4-4h8l-4 4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.question-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Vertical gap inside the question selection + answer pair */
 }
 
 .signup-form button {
   width: 100%;
   padding: 12px;
   background: #238636;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  border-radius: 6px;
   color: #ffffff;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  margin-top: 16px; /* Increased gap separating form inputs from the primary button */
+  transition: background-color 0.15s;
 }
 
 .signup-form button:hover:not(:disabled) {
   background: #2ea043;
 }
 
-.signup-form button:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
+.signup-form button:active:not(:disabled) {
+  background: #238636;
 }
 
-@media (max-width: 600px) {
+.signup-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.auth-links {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.auth-links a {
+  color: #58a6ff;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.auth-links a:hover {
+  color: #2f81f7;
+  text-decoration: underline;
+}
+
+.error-message {
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  background: rgba(248, 81, 73, 0.1);
+  border: 1px solid rgba(248, 81, 73, 0.4);
+  border-radius: 6px;
+  color: #ff7b72;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Mobile responsive single-column layouts */
+@media (max-width: 640px) {
+  .signup-form {
+    padding: 32px 24px;
+  }
+  
   .form-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    gap: 0;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
   }
 }

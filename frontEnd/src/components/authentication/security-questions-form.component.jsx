@@ -1,362 +1,234 @@
-import { useEffect, useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { updateSecurityQuestions } from '../../services/auth.service';
+import { getErrorMessage } from '../../utils/error-handler.util';
+
+// Inside your SecurityQuestionsForm Component File (Top Section)
+
+const SECURITY_QUESTIONS = [
+  { id: 'mother_maiden_name', text: "What is your mother's maiden name?" },
+  { id: 'first_pet_name', text: "What was your first pet's name?" },
+  { id: 'birth_city', text: 'In what city were you born?' },
+  { id: 'favorite_book', text: 'What is your favorite book?' },
+  { id: 'high_school_name', text: 'What was the name of your high school?' }
+];
 
 function SecurityQuestionsForm() {
-  const securityTimeoutRef = useRef(null);
+  const timeoutRef = useRef(null);
 
-  const [questions, setQuestions] = useState([]);
-  const [questionsLoading, setQuestionsLoading] = useState(true);
-  const [questionsError, setQuestionsError] = useState('');
-  
-  const [securityData, setSecurityData] = useState({
-    securityQuestion1: '',
-    securityAnswer1: '',
-    securityQuestion2: '',
-    securityAnswer2: '',
+  const [questions, setQuestions] = useState({
+    security_question_1: '',
+    security_answer_1: '',
+    security_question_2: '',
+    security_answer_2: '',
   });
 
-  const [securityErrors, setSecurityErrors] = useState({});
-  const [securityLoading, setSecurityLoading] = useState(false);
-  const [securityMessage, setSecurityMessage] = useState('');
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
 
-  // ✅ Load all available questions for the dropdown
   useEffect(() => {
-    const fetchQuestions = async () => {
-      setQuestionsLoading(true);
-      try {
-        const response = await fetch('/api/users/security-questions');
-        if (!response.ok) throw new Error('Failed to load questions');
-        const data = await response.json();
-        setQuestions(data.data || []);
-        setQuestionsError('');
-      } catch (err) {
-        setQuestionsError(`Error loading questions: ${err.message}`);
-        setQuestions([]);
-      } finally {
-        setQuestionsLoading(false);
-      }
-    };
-
-    fetchQuestions();
-
     return () => {
-      if (securityTimeoutRef.current) clearTimeout(securityTimeoutRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
-  const handleSecurityChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setSecurityData(prev => ({ ...prev, [name]: value }));
-    
-    // ✅ Clear field-specific errors when user starts typing
-    if (securityErrors[name]) {
-      setSecurityErrors(prev => {
+    setQuestions(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
       });
     }
-
-    // ✅ Clear cross-field error when user changes a question
-    if (name.startsWith('securityQuestion')) {
-      if (securityErrors.securityQuestion2) {
-        setSecurityErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.securityQuestion2;
-          return newErrors;
-        });
-      }
-    }
   };
 
-  const validateSecurity = () => {
-    const errors = {};
+  const validateQuestions = () => {
+    const newErrors = {};
 
-    // Question 1 validation
-    if (!securityData.securityQuestion1) {
-      errors.securityQuestion1 = 'Please select security question 1';
+    if (!questions.security_question_1) {
+      newErrors.security_question_1 = 'First question is required';
+    }
+    if (!questions.security_answer_1?.trim()) {
+      newErrors.security_answer_1 = 'First answer is required';
     }
 
-    // Answer 1 validation
-    if (!securityData.securityAnswer1.trim()) {
-      errors.securityAnswer1 = 'Answer required';
-    } else if (securityData.securityAnswer1.trim().length < 2) {
-      errors.securityAnswer1 = 'Answer must be at least 2 characters';
+    if (!questions.security_question_2) {
+      newErrors.security_question_2 = 'Second question is required';
+    }
+    if (!questions.security_answer_2?.trim()) {
+      newErrors.security_answer_2 = 'Second answer is required';
     }
 
-    // Question 2 validation
-    if (!securityData.securityQuestion2) {
-      errors.securityQuestion2 = 'Please select security question 2';
+    if (
+      questions.security_question_1 &&
+      questions.security_question_2 &&
+      questions.security_question_1 === questions.security_question_2
+    ) {
+      newErrors.security_question_2 = 'Please select two different questions';
     }
 
-    // Answer 2 validation
-    if (!securityData.securityAnswer2.trim()) {
-      errors.securityAnswer2 = 'Answer required';
-    } else if (securityData.securityAnswer2.trim().length < 2) {
-      errors.securityAnswer2 = 'Answer must be at least 2 characters';
-    }
-
-    // ✅ Ensure two different questions are selected
-    if (securityData.securityQuestion1 && securityData.securityQuestion2 && 
-        securityData.securityQuestion1 === securityData.securityQuestion2) {
-      errors.securityQuestion2 = 'Please select a different question than question 1';
-    }
-
-    return errors;
+    return newErrors;
   };
 
-  const handleSecuritySave = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const errors = validateSecurity();
+    const newErrors = validateQuestions();
 
-    if (Object.keys(errors).length > 0) {
-      setSecurityErrors(errors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    setSecurityLoading(true);
-    setSecurityMessage('');
-    if (securityTimeoutRef.current) clearTimeout(securityTimeoutRef.current);
+    setLoading(true);
+    setMessage('');
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     try {
-      const response = await fetch('/api/users/security-questions', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          securityQuestion1: securityData.securityQuestion1,
-          // ✅ Send trimmed answer (backend will normalize: trim + lowercase)
-          securityAnswer1: securityData.securityAnswer1.trim(),
-          securityQuestion2: securityData.securityQuestion2,
-          // ✅ Send trimmed answer (backend will normalize: trim + lowercase)
-          securityAnswer2: securityData.securityAnswer2.trim(),
-        }),
-      });
+      // ✅ Call service with snake_case parameters
+      await updateSecurityQuestions(
+        questions.security_question_1,
+        questions.security_answer_1.trim(),
+        questions.security_question_2,
+        questions.security_answer_2.trim()
+      );
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error?.message || 'Failed to update security questions');
-      }
-
-      setSecurityMessage('Security questions saved successfully');
-      
-      // ✅ Clear form after successful save
-      setSecurityData({
-        securityQuestion1: '',
-        securityAnswer1: '',
-        securityQuestion2: '',
-        securityAnswer2: '',
-      });
-      setSecurityErrors({});
-
-      securityTimeoutRef.current = setTimeout(() => setSecurityMessage(''), 4000);
+      setMessage('Security questions updated successfully');
+      timeoutRef.current = setTimeout(() => setMessage(''), 4000);
     } catch (error) {
-      setSecurityMessage(`Error: ${error.message}`);
+      const errorMsg = getErrorMessage(error);
+      setMessage(`Error: ${errorMsg}`);
     } finally {
-      setSecurityLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleSecurityClear = () => {
-    // ✅ Ask for confirmation before clearing
-    if (securityData.securityQuestion1 || securityData.securityAnswer1 || 
-        securityData.securityQuestion2 || securityData.securityAnswer2) {
-      if (!window.confirm('Are you sure you want to clear all fields?')) {
-        return;
-      }
-    }
-
-    setSecurityData({
-      securityQuestion1: '',
-      securityAnswer1: '',
-      securityQuestion2: '',
-      securityAnswer2: '',
+  const handleClear = () => {
+    setQuestions({
+      security_question_1: '',
+      security_answer_1: '',
+      security_question_2: '',
+      security_answer_2: '',
     });
-    setSecurityErrors({});
-    setSecurityMessage('');
-    if (securityTimeoutRef.current) clearTimeout(securityTimeoutRef.current);
+    setErrors({});
+    setMessage('');
   };
-
-  // ✅ Check if form has any data entered
-  const hasFormData = !!(
-    securityData.securityQuestion1 || securityData.securityAnswer1 || 
-    securityData.securityQuestion2 || securityData.securityAnswer2
-  );
 
   return (
     <div className="settings-section">
       <div className="section-header">
-        <h2>Security Backup</h2>
-        <p>Add security questions to recover your account if you forget your password</p>
+        <h2>Security Questions</h2>
+        <p>Update your security questions for account recovery</p>
       </div>
 
-      {/* ✅ Show loading state while fetching questions */}
-      {questionsLoading && (
-        <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-          Loading security questions...
-        </div>
-      )}
-
-      {/* ✅ Show error if questions fail to load */}
-      {questionsError && (
-        <div className="error-message-box" style={{ marginBottom: '20px' }}>
-          {questionsError}
-        </div>
-      )}
-
-      {/* Show form only if questions loaded successfully */}
-      {!questionsLoading && questions.length > 0 && (
-        <form onSubmit={handleSecuritySave} className="settings-form">
-          
-          <div className="security-grid">
-
-            <div className="form-group">
-              <label htmlFor="securityQuestion1">Security Question 1 *</label>
-              <select
-                id="securityQuestion1"
-                name="securityQuestion1"
-                value={securityData.securityQuestion1}
-                onChange={handleSecurityChange}
-                disabled={securityLoading}
-                className={securityErrors.securityQuestion1 ? 'error' : ''}
-              >
-                <option value="">Select a question</option>
-                {questions.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.text}
-                  </option>
-                ))}
-              </select>
-
-              {securityErrors.securityQuestion1 && (
-                <span className="error-message">
-                  {securityErrors.securityQuestion1}
-                </span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="securityAnswer1">Your Answer *</label>
-              <input
-                id="securityAnswer1"
-                type="text"
-                name="securityAnswer1"
-                value={securityData.securityAnswer1}
-                onChange={handleSecurityChange}
-                disabled={securityLoading}
-                className={securityErrors.securityAnswer1 ? 'error' : ''}
-                placeholder="Your answer"
-                autoComplete="off"
-              />
-
-              {securityErrors.securityAnswer1 && (
-                <span className="error-message">
-                  {securityErrors.securityAnswer1}
-                </span>
-              )}
-
-              <span className="hint">
-                Keep your answer simple and memorable
-              </span>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="securityQuestion2">Security Question 2 *</label>
-              <select
-                id="securityQuestion2"
-                name="securityQuestion2"
-                value={securityData.securityQuestion2}
-                onChange={handleSecurityChange}
-                disabled={securityLoading}
-                className={securityErrors.securityQuestion2 ? 'error' : ''}
-              >
-                <option value="">Select a question</option>
-                {questions.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    {q.text}
-                  </option>
-                ))}
-              </select>
-
-              {securityErrors.securityQuestion2 && (
-                <span className="error-message">
-                  {securityErrors.securityQuestion2}
-                </span>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="securityAnswer2">Your Answer *</label>
-              <input
-                id="securityAnswer2"
-                type="text"
-                name="securityAnswer2"
-                value={securityData.securityAnswer2}
-                onChange={handleSecurityChange}
-                disabled={securityLoading}
-                className={securityErrors.securityAnswer2 ? 'error' : ''}
-                placeholder="Your answer"
-                autoComplete="off"
-              />
-
-              {securityErrors.securityAnswer2 && (
-                <span className="error-message">
-                  {securityErrors.securityAnswer2}
-                </span>
-              )}
-
-              <span className="hint">
-                Keep your answer simple and memorable
-              </span>
-            </div>
-
-          </div>
-
-          {securityMessage && (
-            <div
-              className={`message ${
-                securityMessage.startsWith('Error')
-                  ? 'error-message-box'
-                  : 'success-message'
-              }`}
-            >
-              {securityMessage}
-            </div>
+      <form onSubmit={handleSubmit} className="settings-form">
+        {/* Question 1 */}
+        <div className="form-group">
+          <label htmlFor="security_question_1">First Security Question</label>
+          <select
+            id="security_question_1"
+            name="security_question_1"
+            value={questions.security_question_1}
+            onChange={handleChange}
+            disabled={loading}
+            className={errors.security_question_1 ? 'error' : ''}
+          >
+            <option value="">Select a question</option>
+            {SECURITY_QUESTIONS.map(q => (
+              <option key={q.id} value={q.id}>
+                {q.text}
+              </option>
+            ))}
+          </select>
+          {errors.security_question_1 && (
+            <span className="error-message">{errors.security_question_1}</span>
           )}
-
-          <div className="form-actions">
-            <button
-              type="submit"
-              disabled={securityLoading || !hasFormData}
-              className="btn btn-primary"
-            >
-              {securityLoading
-                ? 'Saving...'
-                : 'Save Security Questions'}
-            </button>
-
-            {hasFormData && (
-              <button
-                type="button"
-                onClick={handleSecurityClear}
-                disabled={securityLoading}
-                className="btn btn-secondary"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </form>
-      )}
-
-      {/* Show message if no questions available */}
-      {!questionsLoading && questions.length === 0 && !questionsError && (
-        <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
-          No security questions available at this time.
         </div>
-      )}
+
+        {/* Answer 1 */}
+        <div className="form-group">
+          <label htmlFor="security_answer_1">Your Answer</label>
+          <input
+            id="security_answer_1"
+            type="text"
+            name="security_answer_1"
+            value={questions.security_answer_1}
+            onChange={handleChange}
+            disabled={loading}
+            placeholder="Enter your answer"
+            className={errors.security_answer_1 ? 'error' : ''}
+          />
+          {errors.security_answer_1 && (
+            <span className="error-message">{errors.security_answer_1}</span>
+          )}
+        </div>
+
+        {/* Question 2 */}
+        <div className="form-group">
+          <label htmlFor="security_question_2">Second Security Question</label>
+          <select
+            id="security_question_2"
+            name="security_question_2"
+            value={questions.security_question_2}
+            onChange={handleChange}
+            disabled={loading}
+            className={errors.security_question_2 ? 'error' : ''}
+          >
+            <option value="">Select a question</option>
+            {SECURITY_QUESTIONS.map(q => (
+              <option key={q.id} value={q.id}>
+                {q.text}
+              </option>
+            ))}
+          </select>
+          {errors.security_question_2 && (
+            <span className="error-message">{errors.security_question_2}</span>
+          )}
+        </div>
+
+        {/* Answer 2 */}
+        <div className="form-group">
+          <label htmlFor="security_answer_2">Your Answer</label>
+          <input
+            id="security_answer_2"
+            type="text"
+            name="security_answer_2"
+            value={questions.security_answer_2}
+            onChange={handleChange}
+            disabled={loading}
+            placeholder="Enter your answer"
+            className={errors.security_answer_2 ? 'error' : ''}
+          />
+          {errors.security_answer_2 && (
+            <span className="error-message">{errors.security_answer_2}</span>
+          )}
+        </div>
+
+        {message && (
+          <div className={`message ${message.startsWith('Error') ? 'error-message-box' : 'success-message'}`}>
+            {message}
+          </div>
+        )}
+
+        <div className="form-actions">
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn btn-primary"
+          >
+            {loading ? 'Updating...' : 'Update Questions'}
+          </button>
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={loading}
+            className="btn btn-secondary"
+          >
+            Clear
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

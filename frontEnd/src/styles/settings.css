@@ -293,6 +293,7 @@ html, body {
 
 .form-actions {
   display: flex;
+  align-items: end;
   gap: 12px;
   padding-top: 8px;
   margin-top: 20px;
@@ -300,7 +301,7 @@ html, body {
 
 .btn {
   padding: 11px 24px;
-  border: none;
+  border: 2px solid transparent;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
@@ -344,6 +345,7 @@ html, body {
   background: linear-gradient(135deg, var(--primary) 0%, rgba(37, 99, 235, 0.9) 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  border-color: transparent;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -359,7 +361,7 @@ html, body {
 .btn-secondary {
   background: var(--bg-secondary);
   color: var(--text-primary);
-  border: 2px solid var(--border);
+  border-color: var(--border);
 }
 
 .btn-secondary:hover:not(:disabled) {

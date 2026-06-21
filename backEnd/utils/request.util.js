@@ -1,4 +1,4 @@
-const { UnauthorizedError } = require('./errors-classes.util');
+const { UnauthorizedError } = require('../errors');
 
 const getRequestUserId = (req) => {
   const userId = req?.user?.user_id;

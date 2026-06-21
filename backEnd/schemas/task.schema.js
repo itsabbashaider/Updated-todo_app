@@ -3,7 +3,6 @@ const Joi = require("joi");
 const { create } = require("../controllers/task.controller");
 
 // ─── Create ───────────────────────────────────────────────────────────────────
-// ─── Create ───────────────────────────────────────────────────────────────────
 
 const createTodoSchema = Joi.object({
   title: Joi.string().required().min(3).max(100),

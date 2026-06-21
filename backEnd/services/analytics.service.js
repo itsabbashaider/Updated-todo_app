@@ -1,175 +1,218 @@
-const { sequelize, Sequelize } = require("../models");
+const { Task } = require('../models');
+const { Op } = require('sequelize');
+const sequelize = require('sequelize');
 const {
   buildAnalyticsResponse,
   parseAnalyticsRange,
-} = require("../utils/analytics.util");
-const { getRequestUserId } = require("../utils/request.util");
+} = require('../utils/analytics.util');
+const { ValidationError, InternalServerError } = require('../errors');
 
-const ANALYTICS_QUERY = `
-  WITH params AS (
-    SELECT (NOW() AT TIME ZONE 'UTC')::date AS today
-  ),
-  user_tasks AS (
-    SELECT
-      task_id,
-      priority,
-      completed,
-      created_at,
-      completed_at
-    FROM tasks
-    WHERE user_id = :userId
-  ),
-  stats AS (
-    SELECT
-      COUNT(*)::int AS total_count,
-      COUNT(*) FILTER (WHERE completed = true)::int AS completed_count,
-      COUNT(*) FILTER (WHERE completed = false)::int AS pending_count,
-      COUNT(*) FILTER (WHERE LOWER(priority) = 'high')::int AS high_priority_count,
-      COUNT(*) FILTER (WHERE LOWER(priority) = 'medium')::int AS medium_priority_count,
-      COUNT(*) FILTER (WHERE LOWER(priority) = 'low')::int AS low_priority_count,
-      COALESCE(
-        ROUND(
-          100.0 * COUNT(*) FILTER (WHERE completed = true) / NULLIF(COUNT(*), 0)
-        ),
-        0
-      )::int AS completion_rate
-    FROM user_tasks
-  ),
-  completed_days AS (
-    SELECT DISTINCT (completed_at AT TIME ZONE 'UTC')::date AS day
-    FROM user_tasks
-    WHERE completed = true AND completed_at IS NOT NULL
-  ),
-  streak_anchor AS (
-    SELECT
-      CASE
-        WHEN EXISTS (
-          SELECT 1
-          FROM completed_days cd, params p
-          WHERE cd.day = p.today
-        ) THEN (SELECT today FROM params)
-        WHEN EXISTS (
-          SELECT 1
-          FROM completed_days cd, params p
-          WHERE cd.day = p.today - 1
-        ) THEN (SELECT today - 1 FROM params)
-        ELSE NULL
-      END AS anchor_day
-  ),
-  numbered_streak_days AS (
-    SELECT
-      cd.day,
-      ROW_NUMBER() OVER (ORDER BY cd.day DESC) AS rn
-    FROM completed_days cd
-    CROSS JOIN streak_anchor sa
-    WHERE sa.anchor_day IS NOT NULL
-      AND cd.day <= sa.anchor_day
-  ),
-  streak_groups AS (
-    SELECT
-      day,
-      day + (rn::int * INTERVAL '1 day') AS streak_group
-    FROM numbered_streak_days
-  ),
-  current_streak AS (
-    SELECT
-      COALESCE(
-        COUNT(*) FILTER (
-          WHERE streak_group = (
-            SELECT anchor_day + INTERVAL '1 day'
-            FROM streak_anchor
-          )
-        ),
-        0
-      )::int AS streak
-    FROM streak_groups
-  ),
-  date_range AS (
-    SELECT generate_series(
-      (SELECT today FROM params) - (:rangeDays * INTERVAL '1 day'),
-      (SELECT today FROM params),
-      '1 day'::interval
-    )::date AS day
-  ),
-  daily_stats AS (
-    SELECT
-      (created_at AT TIME ZONE 'UTC')::date AS day,
-      COUNT(*)::int AS total,
-      COUNT(*) FILTER (WHERE completed = true)::int AS completed
-    FROM user_tasks
-    WHERE created_at >= (
-      ((SELECT today FROM params) - (:rangeDays * INTERVAL '1 day'))::timestamp AT TIME ZONE 'UTC'
-    )
-    GROUP BY (created_at AT TIME ZONE 'UTC')::date
-  ),
-  trend_data AS (
-    SELECT
-      COALESCE(
-        json_agg(
-          json_build_object(
-            'date', dr.day::timestamp AT TIME ZONE 'UTC',
-            'total', COALESCE(ds.total, 0),
-            'completed', COALESCE(ds.completed, 0),
-            'pending', COALESCE(ds.total, 0) - COALESCE(ds.completed, 0),
-            'completionRate',
-              CASE
-                WHEN COALESCE(ds.total, 0) > 0
-                  THEN ROUND(100.0 * COALESCE(ds.completed, 0) / ds.total)::int
-                ELSE 0
-              END
-          )
-          ORDER BY dr.day
-        ),
-        '[]'::json
-      ) AS trend_data
-    FROM date_range dr
-    LEFT JOIN daily_stats ds ON ds.day = dr.day
-  ),
-  weekly_comparison AS (
-    SELECT
-      COUNT(*) FILTER (
-        WHERE completed = true
-          AND completed_at IS NOT NULL
-          AND (completed_at AT TIME ZONE 'UTC')::date
-            BETWEEN (SELECT today FROM params) - 6 AND (SELECT today FROM params)
-      )::int AS current_week,
-      COUNT(*) FILTER (
-        WHERE completed = true
-          AND completed_at IS NOT NULL
-          AND (completed_at AT TIME ZONE 'UTC')::date
-            BETWEEN (SELECT today FROM params) - 13 AND (SELECT today FROM params) - 7
-      )::int AS last_week
-    FROM user_tasks
-  )
-  SELECT
-    stats.total_count,
-    stats.completed_count,
-    stats.pending_count,
-    stats.high_priority_count,
-    stats.medium_priority_count,
-    stats.low_priority_count,
-    stats.completion_rate,
-    current_streak.streak,
-    trend_data.trend_data,
-    weekly_comparison.current_week,
-    weekly_comparison.last_week
-  FROM stats
-  CROSS JOIN current_streak
-  CROSS JOIN trend_data
-  CROSS JOIN weekly_comparison;
-`;
+exports.getAnalytics = async (userId, range = 7) => {
+  try {
+    const safeRange = parseAnalyticsRange(range);
+    
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
 
-exports.getAnalytics = async (req, range = 7) => {
-  const userId = getRequestUserId(req);
-  const safeRange = parseAnalyticsRange(range);
+    const rangeStart = new Date(today);
+    rangeStart.setDate(rangeStart.getDate() - safeRange);
 
-  const [row] = await sequelize.query(ANALYTICS_QUERY, {
-    replacements: {
-      userId,
-      rangeDays: safeRange - 1,
+    const total_count = await this._getTotalCount(userId);
+    const completed_count = await this._getCompletedCount(userId);
+    const pending_count = total_count - completed_count;
+
+    const high_priority_count = await this._getPriorityCount(userId, 'high');
+    const medium_priority_count = await this._getPriorityCount(userId, 'medium');
+    const low_priority_count = await this._getPriorityCount(userId, 'low');
+
+    const completion_rate = this._calculateCompletionRate(
+      completed_count,
+      total_count
+    );
+
+    const streak = await this._calculateStreak(userId, today);
+
+    const trendDataRaw = await this._getTrendDataRaw(userId);
+    
+    const trendData = this._buildTrendData(
+      trendDataRaw,
+      today,
+      safeRange
+    );
+
+    const current_week = await this._getWeeklyCount(userId, {
+      start: this._getWeekStart(today),
+      end: today
+    });
+
+    const last_week = await this._getWeeklyCount(userId, {
+      start: this._getWeekStart(today, -7),
+      end: this._getWeekStart(today)
+    });
+
+    const row = {
+      total_count,
+      completed_count,
+      pending_count,
+      high_priority_count,
+      medium_priority_count,
+      low_priority_count,
+      completion_rate,
+      streak,
+      trend_data: trendData,
+      current_week,
+      last_week,
+    };
+
+    return buildAnalyticsResponse(row);
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error;
+    }
+    throw new InternalServerError('Failed to fetch analytics data');
+  }
+};
+
+exports._getTotalCount = async (userId) => {
+  return await Task.count({
+    where: { user_id: userId },
+  });
+};
+
+exports._getCompletedCount = async (userId) => {
+  return await Task.count({
+    where: {
+      user_id: userId,
+      completed: true,
     },
-    type: Sequelize.QueryTypes.SELECT,
+  });
+};
+
+exports._getPriorityCount = async (userId, priority) => {
+  return await Task.count({
+    where: {
+      user_id: userId,
+      [Op.where]: sequelize.where(
+        sequelize.fn('LOWER', sequelize.col('priority')),
+        Op.eq,
+        priority.toLowerCase()
+      ),
+    },
+  });
+};
+
+exports._calculateCompletionRate = (completed, total) => {
+  return total > 0 ? Math.round((completed / total) * 100) : 0;
+};
+
+exports._calculateStreak = async (userId, today) => {
+  const completedTasks = await Task.findAll({
+    where: {
+      user_id: userId,
+      completed: true,
+    },
+    attributes: ['completed_at'],
+    raw: true,
   });
 
-  return buildAnalyticsResponse(row);
+  const completedDays = new Set(
+    completedTasks
+      .filter(t => t.completed_at)
+      .map(t => {
+        const date = new Date(t.completed_at);
+        date.setUTCHours(0, 0, 0, 0);
+        return date.toISOString().split('T')[0];
+      })
+  );
+
+  let streak = 0;
+  let checkDate = new Date(today);
+  checkDate.setUTCHours(0, 0, 0, 0);
+
+  const todayStr = today.toISOString().split('T')[0];
+  const yesterdayStr = new Date(today);
+  yesterdayStr.setDate(yesterdayStr.getDate() - 1);
+  const yesterdayStr2 = yesterdayStr.toISOString().split('T')[0];
+
+  if (completedDays.has(todayStr) || completedDays.has(yesterdayStr2)) {
+    while (completedDays.has(checkDate.toISOString().split('T')[0])) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+  }
+
+  return streak;
+};
+
+exports._getTrendDataRaw = async (userId) => {
+  return await Task.findAll({
+    attributes: [
+      [sequelize.fn('DATE', sequelize.col('completed_at')), 'date'],
+      [sequelize.fn('COUNT', sequelize.col('task_id')), 'completed'],
+    ],
+    where: {
+      user_id: userId,
+      completed: true,
+      completed_at: {
+        [Op.not]: null,
+      },
+    },
+    group: [sequelize.fn('DATE', sequelize.col('completed_at'))],
+    order: [[sequelize.fn('DATE', sequelize.col('completed_at')), 'ASC']],
+    raw: true,
+  });
+};
+
+exports._buildTrendData = (
+  trendDataRaw,
+  today,
+  safeRange
+) => {
+  const trendData = [];
+  const trendMap = new Map(
+    trendDataRaw.map(row => [
+      String(row.date).split('T')[0],
+      parseInt(row.completed) || 0
+    ])
+  );
+
+  for (let i = safeRange; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    const completed = trendMap.get(dateStr) || 0;
+    const total = completed;
+    const pending = 0;
+    const completionRate = completed > 0 ? 100 : 0;
+
+    trendData.push({
+      date: new Date(date).toISOString(),
+      total,
+      completed,
+      pending,
+      completionRate,
+    });
+  }
+
+  return trendData;
+};
+
+exports._getWeekStart = (date, daysOffset = 0) => {
+  const start = new Date(date);
+  start.setDate(start.getDate() + daysOffset - 6);
+  start.setUTCHours(0, 0, 0, 0);
+  return start;
+};
+
+exports._getWeeklyCount = async (userId, dateRange) => {
+  return await Task.count({
+    where: {
+      user_id: userId,
+      completed: true,
+      completed_at: {
+        [Op.between]: [dateRange.start, dateRange.end],
+      },
+    },
+  });
 };

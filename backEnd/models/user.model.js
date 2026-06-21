@@ -19,32 +19,32 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      firstName: {
+      first_name: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      lastName: {
+      last_name: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      isEmailVerified: {
+      is_email_verified: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
-      lastLogin: {
+      last_login: {
         type: DataTypes.DATE,
         allowNull: true,
       },
-      isActive: {
+      is_active: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
-      securityQuestion1: DataTypes.STRING,
-      securityAnswer1: DataTypes.STRING,      // hashed
-      securityQuestion2: DataTypes.STRING,
-      securityAnswer2: DataTypes.STRING,      // hashed
-      passwordResetToken: DataTypes.STRING,   // unique
-      passwordResetExpiresAt: DataTypes.DATE,
+      security_question_1: DataTypes.STRING,
+      security_answer_1: DataTypes.STRING,      // hashed
+      security_question_2: DataTypes.STRING,
+      security_answer_2: DataTypes.STRING,      // hashed
+      password_reset_token: DataTypes.STRING,   // unique
+      password_reset_expires_at: DataTypes.DATE,
     },
     {
       tableName: 'users',
